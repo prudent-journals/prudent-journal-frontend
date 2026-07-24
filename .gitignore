@@ -1,0 +1,32 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# Next.js build output
+/.next/
+/out/
+next-env.d.ts
+
+# Production
+/build
+/dist
+
+# Environment (never commit real config)
+.env
+.env*.local
+.env.local
+.env.production
+
+# Debug and logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor and OS
+.vscode/
+.idea/
+.DS_Store
+*.pem
+/coverage

@@ -1,0 +1,271 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Typography Base ─────────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'DM Sans', system-ui, sans-serif;
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    @apply font-sans text-navy-900 bg-parchment-50;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  h1, h2, h3 { @apply font-serif; letter-spacing: -0.01em; }
+  h4, h5, h6 { @apply font-sans font-semibold; }
+
+  ::selection {
+    background: rgba(197, 151, 26, 0.25);
+    color: #0d1624;
+  }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #f5efdc; }
+  ::-webkit-scrollbar-thumb { background: #c5971a; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #9e7814; }
+}
+
+/* ── Components ──────────────────────────────────────────────────────── */
+@layer components {
+  /* Academic-style decorative rule */
+  .divider-gold {
+    @apply relative flex items-center gap-4 my-8;
+  }
+  .divider-gold::before,
+  .divider-gold::after {
+    content: '';
+    @apply flex-1 h-px bg-gradient-to-r from-transparent via-gold-500 to-transparent;
+  }
+
+  /* Ornamental heading style */
+  .heading-display {
+    font-family: var(--font-display);
+    @apply font-light tracking-tight;
+  }
+
+  /* Card base */
+  .card {
+    @apply bg-white rounded-2xl shadow-card border border-parchment-200 transition-all duration-300;
+  }
+  .card:hover { @apply shadow-card-hover; }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* Gold underline animation */
+  .animated-underline {
+    @apply relative;
+  }
+  .animated-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 h-0.5 w-0 bg-gold-500 transition-all duration-300;
+  }
+  .animated-underline:hover::after { @apply w-full; }
+
+  /* Section with left gold border */
+  .section-bordered {
+    @apply border-l-4 border-gold-500 pl-4;
+  }
+
+  /* Stagger animation utility */
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 80ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 160ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 240ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 320ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 400ms; }
+
+  /* Input base */
+  .input-base {
+    @apply w-full px-4 py-2.5 rounded-xl border border-parchment-300 bg-white 
+           text-navy-900 placeholder:text-navy-400 font-sans text-sm
+           focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400
+           transition-all duration-200;
+  }
+
+  /* Button variants */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-sm
+           bg-navy-900 text-parchment-50 hover:bg-navy-800
+           transition-all duration-200 hover:shadow-navy active:scale-95;
+  }
+  .btn-gold {
+    @apply inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-sm
+           bg-gold-500 text-navy-900 hover:bg-gold-400
+           transition-all duration-200 hover:shadow-gold active:scale-95;
+  }
+  .btn-outline {
+    @apply inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-sm
+           border-2 border-navy-900 text-navy-900 hover:bg-navy-900 hover:text-white
+           transition-all duration-200 active:scale-95;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+           text-navy-600 hover:bg-parchment-100 hover:text-navy-900
+           transition-all duration-200;
+  }
+
+  /* Hero background pattern */
+  .hero-pattern {
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(197, 151, 26, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(39, 66, 108, 0.15) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c5971a' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+}
+
+/* ── Animations ──────────────────────────────────────────────────────── */
+@layer utilities {
+  .animate-in {
+    animation: fadeUp 0.5s ease-out forwards;
+    opacity: 0;
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .glass-dark {
+    background: rgba(13, 22, 36, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(197, 151, 26, 0.2);
+  }
+
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #c5971a, #f0cd55, #c5971a);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    background-size: 200% auto;
+  }
+
+  .noise-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Application feel
+   Makes the installed app behave like a native one rather than a web page:
+   no rubber band highlight on tap, no accidental text selection on controls,
+   comfortable touch targets, and content that respects the device safe areas.
+   --------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  /* Respect a reduced motion preference throughout. */
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  body {
+    /* Kill the grey flash Safari and Chrome paint over tapped elements. */
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  /* Controls should not be selectable like body copy. */
+  button, a, [role='button'], label, nav {
+    -webkit-touch-callout: none;
+  }
+
+  /* iOS zooms the viewport when a focused input is under 16px. */
+  @media (max-width: 767px) {
+    input, select, textarea {
+      font-size: 16px;
+    }
+  }
+
+  /* Anything focused by keyboard stays clearly visible. */
+  :focus-visible {
+    outline: 2px solid theme('colors.gold.600');
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer components {
+  /* Touch targets meet the recommended minimum on small screens. */
+  @media (max-width: 767px) {
+    .btn-primary, .btn-gold, .btn-outline, .btn-ghost {
+      min-height: 44px;
+    }
+  }
+
+  /* Presses feel physical rather than instant. */
+  .btn-primary, .btn-gold, .btn-outline {
+    transition: transform 120ms ease, background-color 200ms ease, border-color 200ms ease;
+  }
+  .btn-primary:active, .btn-gold:active, .btn-outline:active {
+    transform: scale(0.975);
+  }
+
+  .card {
+    transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  }
+  @media (hover: hover) {
+    a.card:hover, .card-interactive:hover {
+      transform: translateY(-2px);
+    }
+  }
+
+  /* Content that must clear the notch or the home indicator. */
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Horizontal rails, used for wide tables and chip rows on small screens. */
+  .scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .scroll-x::-webkit-scrollbar { display: none; }
+
+  /* Sheets rise from the bottom on mobile, the way an app presents them. */
+  .sheet-enter {
+    animation: sheet-up 260ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+}
+
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Numerals in statistics should be lining figures, not old style, so that a
+   zero does not read as a letter O in the display face. */
+.tabular-figures {
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: 'lnum' 1, 'tnum' 1;
+}
