@@ -1,7 +1,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { User } from '@/types';
+import { User, UserRole } from '@/types';
 import { authApi } from '@/lib/api';
+
+/**
+ * Roles that existed before they were collapsed to admin / reviewer / user.
+ *
+ * A browser signed in before that change still has the old name in
+ * localStorage, and because nothing here matches it any more the person
+ * silently loses every administrator link until they sign out. Mapping them on
+ * rehydrate repairs the session in place.
+ */
+const LEGACY_ROLES: Record<string, UserRole> = {
+  super_admin: 'admin',
+  journal_admin: 'admin',
+  conference_admin: 'admin',
+};
 
 interface AuthState {
   user: User | null;
@@ -14,6 +28,7 @@ interface AuthState {
   logout: () => void;
   setUser: (user: User) => void;
   refreshUser: () => Promise<void>;
+  syncUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -58,13 +73,42 @@ export const useAuthStore = create<AuthState>()(
           get().logout();
         }
       },
+
+      syncUser: async () => {
+        // Quietly bring the cached account back in step with the server, so a
+        // role an administrator changed reaches this browser without a sign
+        // out. Unlike refreshUser this never signs anyone out: the response
+        // interceptor already handles a real 401, and a transient network
+        // failure must not throw someone out of a working session.
+        if (!get().token) return;
+        try {
+          const { data } = await authApi.me();
+          set({ user: data });
+        } catch {
+          /* keep the session as it stands */
+        }
+      },
     }),
     {
       name: 'pj_auth',
+      version: 2,
       partialize: (state) => ({ user: state.user, token: state.token }),
+
+      migrate: (persisted, version) => {
+        const state = persisted as { user?: User | null; token?: string | null };
+        if (version < 2 && state?.user) {
+          const mapped = LEGACY_ROLES[state.user.role as string];
+          if (mapped) state.user = { ...state.user, role: mapped };
+        }
+        return state;
+      },
+
       // Route guards must not run before this fires, otherwise a signed in
       // user is redirected to the login page on every hard refresh.
-      onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+        state?.syncUser();
+      },
     }
   )
 );
