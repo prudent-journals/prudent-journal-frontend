@@ -32,7 +32,7 @@ export default function LoginPage() {
       toast.success('Welcome back');
       // Send people to the area that matches what they actually do here.
       const role = useAuthStore.getState().user?.role;
-      if (role && ['super_admin', 'journal_admin', 'conference_admin'].includes(role)) {
+      if (role === 'admin') {
         router.push('/admin');
       } else if (role === 'reviewer') {
         router.push('/reviewer');

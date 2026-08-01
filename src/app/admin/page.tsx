@@ -5,15 +5,11 @@ import Link from 'next/link';
 import { FileText, Users, BookOpen, Calendar, TrendingUp, Clock, CheckCircle, ArrowRight } from 'lucide-react';
 import { papersApi, usersApi, publicationsApi, conferencesApi } from '@/lib/api';
 import { Paper, User, Conference } from '@/types';
-import { getStatusColor, getStatusLabel, formatDate, timeAgo } from '@/lib/utils';
+import { getStatusColor, getStatusLabel, formatDate, timeAgo, getRoleLabel } from '@/lib/utils';
 import { useAuthStore } from '@/lib/auth-store';
 
 export default function AdminPage() {
   const { user } = useAuthStore();
-  // Each administrative role sees only the parts of the system it controls.
-  const canJournal = user?.role === 'super_admin' || user?.role === 'journal_admin';
-  const canUsers = user?.role === 'super_admin';
-  const canConferences = user?.role === 'super_admin' || user?.role === 'conference_admin';
 
   const [papers, setPapers] = useState<Paper[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -24,8 +20,8 @@ export default function AdminPage() {
   useEffect(() => {
     if (!user) return;
     Promise.allSettled([
-      canJournal ? papersApi.adminAll({ size: 10 }) : Promise.resolve(null),
-      canUsers ? usersApi.adminList({ size: 100 }) : Promise.resolve(null),
+      papersApi.adminAll({ size: 10 }),
+      usersApi.adminList({ size: 100 }),
       conferencesApi.list(),
       publicationsApi.stats(),
     ]).then(([p, u, c, s]) => {
@@ -34,7 +30,7 @@ export default function AdminPage() {
       if (c.status === 'fulfilled' && c.value) setConferences(c.value.data);
       if (s.status === 'fulfilled' && s.value) setStats(s.value.data);
     }).finally(() => setLoading(false));
-  }, [user, canJournal, canUsers]);
+  }, [user]);
 
   const paperStats = {
     total: papers.length,
@@ -44,12 +40,12 @@ export default function AdminPage() {
   };
 
   const statCards = [
-    canJournal && { label: 'Total Papers', value: paperStats.total, icon: FileText, href: '/admin/papers', color: 'text-blue-600 bg-blue-50' },
-    canJournal && { label: 'Pending Review', value: paperStats.pending, icon: Clock, href: '/admin/papers?status=submitted', color: 'text-orange-600 bg-orange-50' },
-    canJournal && { label: 'Published', value: stats.total_publications, icon: BookOpen, href: '/admin/publications', color: 'text-gold-600 bg-gold-50' },
-    canConferences && { label: 'Conferences', value: conferences.length, icon: Calendar, href: '/admin/conferences', color: 'text-green-600 bg-green-50' },
-    canUsers && { label: 'Total Users', value: users.length, icon: Users, href: '/admin/users', color: 'text-purple-600 bg-purple-50' },
-  ].filter(Boolean) as { label: string; value: number; icon: typeof FileText; href: string; color: string }[];
+    { label: 'Total Papers', value: paperStats.total, icon: FileText, href: '/admin/papers', color: 'text-blue-600 bg-blue-50' },
+    { label: 'Pending Review', value: paperStats.pending, icon: Clock, href: '/admin/papers?status=submitted', color: 'text-orange-600 bg-orange-50' },
+    { label: 'Published', value: stats.total_publications, icon: BookOpen, href: '/admin/publications', color: 'text-gold-600 bg-gold-50' },
+    { label: 'Conferences', value: conferences.length, icon: Calendar, href: '/admin/conferences', color: 'text-green-600 bg-green-50' },
+    { label: 'Total Users', value: users.length, icon: Users, href: '/admin/users', color: 'text-purple-600 bg-purple-50' },
+  ];
 
   if (loading) {
     return (
@@ -67,11 +63,7 @@ export default function AdminPage() {
       <div className="mb-8">
         <h1 className="font-serif text-3xl text-navy-900 mb-1">Admin Dashboard</h1>
         <p className="text-navy-500 font-sans text-sm">
-          {canUsers
-            ? 'Manage submissions, publications, conferences and users.'
-            : canJournal
-              ? 'Manage submissions and publications.'
-              : 'Manage conferences and registrations.'}
+          Manage submissions, publications, conferences, certificates and users.
         </p>
       </div>
 
@@ -112,7 +104,6 @@ export default function AdminPage() {
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Recent submissions */}
-        {canJournal && (
         <div className="card overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-parchment-200">
             <h2 className="font-serif text-lg text-navy-900">Recent Submissions</h2>
@@ -139,11 +130,9 @@ export default function AdminPage() {
             ))}
           </div>
         </div>
-        )}
 
         {/* Recent users and quick actions */}
         <div className="space-y-6">
-          {canUsers && (
           <div className="card overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-parchment-200">
               <h2 className="font-serif text-lg text-navy-900">Recent Users</h2>
@@ -163,21 +152,21 @@ export default function AdminPage() {
                       <p className="text-xs text-navy-400">{user.institution || user.email}</p>
                     </div>
                   </div>
-                  <span className="badge bg-parchment-200 text-navy-600">{user.role.replace('_', ' ')}</span>
+                  <span className="badge bg-parchment-200 text-navy-600">{getRoleLabel(user.role)}</span>
                 </div>
               ))}
             </div>
           </div>
-          )}
 
           <div className="card p-5">
             <h3 className="font-serif text-base text-navy-900 mb-3">Quick Actions</h3>
             <div className="space-y-2">
               {([
-                canJournal && { href: '/admin/papers?status=submitted', label: 'Review Pending Submissions', badge: paperStats.pending },
-                canJournal && { href: '/admin/papers?status=reviewed', label: 'Papers Awaiting Decision' },
-                canConferences && { href: '/admin/conferences', label: 'Manage Conferences' },
-              ].filter(Boolean) as { href: string; label: string; badge?: number }[]).map(({ href, label, badge }) => (
+                { href: '/admin/papers?status=submitted', label: 'Review Pending Submissions', badge: paperStats.pending },
+                { href: '/admin/papers?status=reviewed', label: 'Papers Awaiting Decision' },
+                { href: '/admin/conferences', label: 'Manage Conferences' },
+                { href: '/admin/users', label: 'Manage Users' },
+              ] as { href: string; label: string; badge?: number }[]).map(({ href, label, badge }) => (
                 <Link key={href} href={href}
                   className="flex items-center justify-between p-3 rounded-xl hover:bg-parchment-100 transition-colors text-sm text-navy-700 font-medium">
                   {label}

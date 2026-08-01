@@ -69,12 +69,9 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Role helpers
-export const isAdmin = (user: User | null) =>
-  user && ['super_admin', 'journal_admin', 'conference_admin'].includes(user.role);
-
-export const isSuperAdmin = (user: User | null) =>
-  user?.role === 'super_admin';
+// Role helpers. One administrator role covers the whole admin area, so there
+// is nothing finer to test for than these two.
+export const isAdmin = (user: User | null) => user?.role === 'admin';
 
 export const isReviewer = (user: User | null) =>
-  user && ['super_admin', 'journal_admin', 'reviewer'].includes(user.role);
+  user?.role === 'admin' || user?.role === 'reviewer';

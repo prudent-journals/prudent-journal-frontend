@@ -10,24 +10,19 @@ import {
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { cn, getInitials, getRoleLabel } from '@/lib/utils';
 
-// Navigation is scoped to what each administrative role can actually do.
-// A conference admin has no business in journal submissions or user management.
-const ALL_NAV = [
-  { href: '/admin', label: 'Overview', icon: LayoutDashboard, exact: true, roles: ['super_admin', 'journal_admin', 'conference_admin'] },
-  { href: '/admin/papers', label: 'Submissions', icon: FileText, roles: ['super_admin', 'journal_admin'] },
-  { href: '/admin/reviews', label: 'Review Queue', icon: Star, roles: ['super_admin', 'journal_admin'] },
-  { href: '/admin/publications', label: 'Publications', icon: BookOpen, roles: ['super_admin', 'journal_admin'] },
-  { href: '/admin/conferences', label: 'Conferences', icon: Calendar, roles: ['super_admin', 'conference_admin'] },
-  { href: '/admin/certificates', label: 'Certificates', icon: Award, roles: ['super_admin', 'journal_admin', 'conference_admin'] },
-  { href: '/admin/users', label: 'Users', icon: Users, roles: ['super_admin'] },
-  { href: '/admin/system', label: 'System', icon: Activity, roles: ['super_admin', 'journal_admin', 'conference_admin'] },
+// One administrator role sees the whole system, so this list is flat: there is
+// nothing to filter it by. If narrower roles are ever reintroduced, this and
+// the guards in the backend are the two places that need to know.
+const NAV = [
+  { href: '/admin', label: 'Overview', icon: LayoutDashboard, exact: true },
+  { href: '/admin/papers', label: 'Submissions', icon: FileText },
+  { href: '/admin/reviews', label: 'Review Queue', icon: Star },
+  { href: '/admin/publications', label: 'Publications', icon: BookOpen },
+  { href: '/admin/conferences', label: 'Conferences', icon: Calendar },
+  { href: '/admin/certificates', label: 'Certificates', icon: Award },
+  { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/system', label: 'System', icon: Activity },
 ];
-
-const ROLE_LABEL: Record<string, string> = {
-  super_admin: 'Administration',
-  journal_admin: 'Journal',
-  conference_admin: 'Conferences',
-};
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -63,8 +58,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!hasHydrated || !user || !isAdmin(user)) return null;
 
-  const nav = ALL_NAV.filter((item) => item.roles.includes(user.role));
-
   // Rendered into both the desktop column and the mobile drawer.
   const sidebarContent = (
     <>
@@ -79,7 +72,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </Link>
         <div className="mt-1 ml-10">
           <span className="text-xs font-mono text-navy-400 uppercase tracking-widest">
-            {ROLE_LABEL[user.role] || 'Admin'}
+            Administration
           </span>
         </div>
       </div>
@@ -97,7 +90,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        {nav.map(({ href, label, icon: Icon, exact }) => {
+        {NAV.map(({ href, label, icon: Icon, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href);
           return (
             <Link key={href} href={href} aria-current={active ? 'page' : undefined} className={cn(
@@ -148,7 +141,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           Prudent<span className="text-gold-400"> Journals</span>
         </Link>
         <span className="ml-auto mr-2 text-xs font-mono text-navy-400 uppercase tracking-widest truncate">
-          {ROLE_LABEL[user.role] || 'Admin'}
+          Administration
         </span>
       </header>
 

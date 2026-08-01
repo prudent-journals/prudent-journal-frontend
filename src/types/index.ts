@@ -1,6 +1,8 @@
 // Enums
 
-export type UserRole = 'super_admin' | 'journal_admin' | 'conference_admin' | 'reviewer' | 'user';
+/** Three roles and no more: admin runs everything, reviewer reviews, user
+ *  submits (shown as "Author"). */
+export type UserRole = 'admin' | 'reviewer' | 'user';
 export type PaperType = 'journal' | 'conference';
 export type PaperStatus =
   | 'submitted'
