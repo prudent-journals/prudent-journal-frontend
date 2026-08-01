@@ -31,7 +31,7 @@ export default function ReviewerLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="min-h-screen flex bg-navy-950">
-      <aside className="w-64 bg-navy-900 border-r border-navy-800 flex-col sticky top-0 h-screen hidden md:flex">
+      <aside className="w-64 flex-shrink-0 bg-navy-900 border-r border-navy-800 flex-col sticky top-0 h-screen hidden md:flex">
         <div className="p-6 border-b border-navy-800">
           <Link href="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gold-500/20 flex items-center justify-center">
@@ -94,7 +94,7 @@ export default function ReviewerLayout({ children }: { children: React.ReactNode
         <span className="text-xs font-mono text-navy-400 uppercase">Reviewer</span>
       </div>
 
-      <main className="flex-1 overflow-auto bg-parchment-50 pt-14 md:pt-0 pb-20 md:pb-0">
+      <main className="flex-1 min-w-0 overflow-auto bg-parchment-50 pt-14 md:pt-0 pb-20 md:pb-0">
         {children}
       </main>
 

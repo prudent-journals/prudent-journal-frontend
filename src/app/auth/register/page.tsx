@@ -99,7 +99,7 @@ export default function RegisterPage() {
             <div className="w-8 h-8 rounded-lg bg-navy-900 flex items-center justify-center">
               <BookOpen className="w-4 h-4 text-gold-400" />
             </div>
-            <span className="font-serif text-xl text-navy-900">Ken<span className="text-gold-600">Scholars</span></span>
+            <span className="font-serif text-xl text-navy-900">Prudent<span className="text-gold-600"> Journals</span></span>
           </div>
 
           <div className="mb-8">
