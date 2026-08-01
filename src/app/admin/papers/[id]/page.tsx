@@ -32,11 +32,11 @@ export default function AdminPaperDetailPage() {
     Promise.all([
       papersApi.get(id),
       papersApi.getReviews(id),
-      usersApi.adminList('reviewer'),
+      usersApi.adminList({ role: 'reviewer', size: 100 }),
     ]).then(([p, r, u]) => {
       setPaper(p.data);
       setReviews(r.data);
-      setReviewers(u.data);
+      setReviewers(u.data.items);
       setNotes(p.data.admin_notes || '');
       setRejection(p.data.rejection_reason || '');
     }).finally(() => setLoading(false));
@@ -66,8 +66,14 @@ export default function AdminPaperDetailPage() {
   };
 
   const handlePublish = async () => {
-    const hasDocument = publishFile || paper?.revised_file_url || paper?.submission_file_url;
-    if (!hasDocument) { toast.error('There is no document to publish yet'); return; }
+    // Manuscripts are Word documents, so only an uploaded PDF or a PDF already
+    // on the paper can be published. Mirrors the check the backend enforces.
+    const existing = paper?.revised_file_url || paper?.submission_file_url;
+    const hasPdf = publishFile || existing?.toLowerCase().endsWith('.pdf');
+    if (!hasPdf) {
+      toast.error('Upload the final typeset PDF to publish');
+      return;
+    }
     setPublishing(true);
     try {
       await papersApi.publish(id, publishFile, pubMeta);

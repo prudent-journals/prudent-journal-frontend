@@ -30,7 +30,8 @@ export default function AdminPapersPage() {
 
   useEffect(() => {
     fetchPapers();
-    usersApi.adminList('reviewer').then(r => setReviewers(r.data)).catch(() => {});
+    usersApi.adminList({ role: 'reviewer', size: 100 })
+      .then(r => setReviewers(r.data.items)).catch(() => {});
   }, [fetchPapers]);
 
   const assignReviewer = async (paperId: number, reviewerId: number) => {

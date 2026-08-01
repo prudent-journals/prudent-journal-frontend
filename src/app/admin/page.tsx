@@ -25,12 +25,12 @@ export default function AdminPage() {
     if (!user) return;
     Promise.allSettled([
       canJournal ? papersApi.adminAll({ size: 10 }) : Promise.resolve(null),
-      canUsers ? usersApi.adminList() : Promise.resolve(null),
+      canUsers ? usersApi.adminList({ size: 100 }) : Promise.resolve(null),
       conferencesApi.list(),
       publicationsApi.stats(),
     ]).then(([p, u, c, s]) => {
       if (p.status === 'fulfilled' && p.value) setPapers(p.value.data);
-      if (u.status === 'fulfilled' && u.value) setUsers(u.value.data);
+      if (u.status === 'fulfilled' && u.value) setUsers(u.value.data.items);
       if (c.status === 'fulfilled' && c.value) setConferences(c.value.data);
       if (s.status === 'fulfilled' && s.value) setStats(s.value.data);
     }).finally(() => setLoading(false));

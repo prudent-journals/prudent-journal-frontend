@@ -59,6 +59,15 @@ export interface User {
   created_at: string;
 }
 
+/** One page of a paginated admin listing. */
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
 export interface UserPublic {
   id: number;
   full_name: string;

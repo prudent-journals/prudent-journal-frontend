@@ -145,6 +145,15 @@ export const usersApi = {
   },
   notifications: (unreadOnly?: boolean) => api.get('/users/me/notifications', { params: { unread_only: unreadOnly } }),
   markAllRead: () => api.post('/users/me/notifications/read-all'),
-  adminList: (role?: string) => api.get('/users', { params: { role } }),
+  // Admin user management. Listing is paginated and filtered server side.
+  adminList: (params?: {
+    role?: string; search?: string; is_active?: boolean; page?: number; size?: number;
+  }) => api.get('/users', { params }),
+  adminGet: (id: number) => api.get(`/users/${id}`),
+  adminCreate: (data: object) => api.post('/users', data),
   adminUpdate: (id: number, data: object) => api.patch(`/users/${id}`, data),
+  adminDelete: (id: number) => api.delete(`/users/${id}`),
+  adminSetPassword: (id: number, new_password: string) =>
+    api.post(`/users/${id}/password`, { new_password }),
+  adminSendReset: (id: number) => api.post(`/users/${id}/send-reset`),
 };
