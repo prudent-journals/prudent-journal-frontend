@@ -11,7 +11,10 @@
  * write request are never cached.
  */
 
-const VERSION = 'v1';
+// Bumped whenever a release changes the shell or the shape of what is cached.
+// v2: three role model, guest conference registration, Word manuscripts. The
+// cached shell from v1 predates all of it and has to be discarded.
+const VERSION = 'v2';
 const SHELL_CACHE = `pj-shell-${VERSION}`;
 const DATA_CACHE = `pj-data-${VERSION}`;
 const DOC_CACHE = `pj-docs-${VERSION}`;
