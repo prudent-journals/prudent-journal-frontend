@@ -11,6 +11,7 @@ import { ArrowLeft, FileText, CheckCircle2, Send, Upload, Loader2 } from 'lucide
 import { papersApi } from '@/lib/api';
 import { Paper, Review } from '@/types';
 import { formatDate, getStatusLabel, getStatusColor, getErrorMessage } from '@/lib/utils';
+import { MANUSCRIPT_ACCEPT_ATTR } from '@/lib/uploads';
 
 const schema = z.object({
   decision: z.enum(['accept', 'revision', 'reject'], {
@@ -145,7 +146,7 @@ export default function ReviewPaperPage() {
             <p className="font-sans font-medium text-navy-900 text-sm">
               {paper.revised_file_url ? 'Current document (latest version)' : 'Submitted manuscript'}
             </p>
-            <p className="font-sans text-xs text-navy-400">Open the PDF to read the full paper</p>
+            <p className="font-sans text-xs text-navy-400">Open the manuscript to read the full paper</p>
           </div>
         </a>
       )}
@@ -168,7 +169,7 @@ export default function ReviewPaperPage() {
         <div className="flex flex-wrap items-center gap-3">
           <input
             type="file"
-            accept="application/pdf"
+            accept={MANUSCRIPT_ACCEPT_ATTR}
             onChange={(e) => setFinalFile(e.target.files?.[0] || null)}
             className="font-sans text-sm text-navy-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-navy-900 file:text-parchment-50 file:text-sm file:cursor-pointer"
           />

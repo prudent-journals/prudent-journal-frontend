@@ -8,6 +8,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import MobileNav from '@/components/layout/MobileNav';
 import { DIRECTORS, EDITORIAL_BOARD, MILESTONES, Person } from '@/lib/people';
+import { JOURNALS } from '@/lib/journals';
 import { getInitials } from '@/lib/utils';
 
 export const metadata: Metadata = {
@@ -125,25 +126,33 @@ export default function AboutPage() {
               </p>
               <h2 className="font-serif text-3xl text-navy-900 mb-4">What we consider</h2>
               <p className="font-sans text-navy-600 leading-relaxed">
-                We publish original research, review articles and conference papers across
-                the applied sciences, engineering, environment, health and public policy.
-                Work that is methodologically sound and clearly reported is welcome
-                regardless of whether its findings are positive.
+                We publish original research, review articles and conference papers under
+                three titles. Work that is methodologically sound and clearly reported is
+                welcome regardless of whether its findings are positive.
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {[
-                ['Agriculture and food systems', 'Crop science, yield modelling, food security'],
-                ['Engineering and energy', 'Power systems, renewables, infrastructure'],
-                ['Environment', 'Water quality, pollution, climate adaptation'],
-                ['Computing and data', 'Applied machine learning, information systems'],
-                ['Health and society', 'Public health, mental health, access to care'],
-                ['Governance and policy', 'Public administration, institutional reform'],
-              ].map(([title, detail]) => (
-                <div key={title} className="rounded-2xl border border-parchment-300 p-6 bg-parchment-50">
-                  <h3 className="font-serif text-lg text-navy-900 mb-2">{title}</h3>
-                  <p className="font-sans text-sm text-navy-500 leading-relaxed">{detail}</p>
+            <div className="grid md:grid-cols-3 gap-5">
+              {JOURNALS.map(({ icon: Icon, title, blurb, topics }) => (
+                <div
+                  key={title}
+                  className="rounded-2xl border border-parchment-300 p-6 bg-parchment-50 flex flex-col min-w-0"
+                >
+                  <div className="w-11 h-11 rounded-xl bg-navy-900 flex items-center justify-center mb-4">
+                    <Icon className="w-5 h-5 text-gold-400" />
+                  </div>
+                  <h3 className="font-serif text-lg text-navy-900 leading-snug mb-2">{title}</h3>
+                  <p className="font-sans text-sm text-navy-500 leading-relaxed mb-4">{blurb}</p>
+                  <ul className="mt-auto flex flex-wrap gap-1.5">
+                    {topics.map((t) => (
+                      <li
+                        key={t}
+                        className="font-sans text-xs text-navy-600 bg-white border border-parchment-300 rounded-full px-2.5 py-1"
+                      >
+                        {t}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               ))}
             </div>

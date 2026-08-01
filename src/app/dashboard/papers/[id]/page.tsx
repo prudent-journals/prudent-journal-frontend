@@ -9,6 +9,7 @@ import { papersApi } from '@/lib/api';
 import { Paper, Review } from '@/types';
 import { getStatusColor, getStatusLabel, formatDate, getErrorMessage, cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { MANUSCRIPT_ACCEPT, MAX_DOCUMENT_SIZE } from '@/lib/uploads';
 
 export default function DashboardPaperDetailPage() {
   const { id } = useParams();
@@ -34,8 +35,9 @@ export default function DashboardPaperDetailPage() {
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop: (files) => files[0] && setRevisionFile(files[0]),
-    accept: { 'application/pdf': ['.pdf'] },
+    accept: MANUSCRIPT_ACCEPT,
     maxFiles: 1,
+    maxSize: MAX_DOCUMENT_SIZE,
   });
 
   const handleResubmit = async () => {
@@ -173,7 +175,7 @@ export default function DashboardPaperDetailPage() {
                 {revisionFile ? (
                   <p className="text-sm font-medium text-green-700">{revisionFile.name}</p>
                 ) : (
-                  <p className="text-sm text-navy-500">Drop revised PDF here or click to browse</p>
+                  <p className="text-sm text-navy-500">Drop your revised Word document here or click to browse</p>
                 )}
               </div>
               <button

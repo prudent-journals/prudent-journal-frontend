@@ -11,6 +11,7 @@ import { useDropzone } from 'react-dropzone';
 import { papersApi, conferencesApi } from '@/lib/api';
 import { Conference } from '@/types';
 import { getErrorMessage, formatFileSize, cn } from '@/lib/utils';
+import { MANUSCRIPT_ACCEPT, MANUSCRIPT_HINT, MAX_DOCUMENT_SIZE } from '@/lib/uploads';
 import { useAuthStore } from '@/lib/auth-store';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -54,13 +55,13 @@ export default function SubmitPage() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'application/pdf': ['.pdf'] },
+    accept: MANUSCRIPT_ACCEPT,
     maxFiles: 1,
-    maxSize: 10 * 1024 * 1024,
+    maxSize: MAX_DOCUMENT_SIZE,
   });
 
   const onSubmit = async (data: FormData) => {
-    if (!file) { toast.error('Please upload your paper (PDF)'); return; }
+    if (!file) { toast.error('Please upload your paper as a Word document'); return; }
 
     const fd = new FormData();
     Object.entries(data).forEach(([k, v]) => { if (v) fd.append(k, v as string); });
@@ -152,7 +153,8 @@ export default function SubmitPage() {
             <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-amber-800 font-sans">
               <strong>Before submitting:</strong> Ensure your paper is anonymized (no author names in the document),
-              formatted per the Prudent Journals guidelines, and saved as a PDF (max 10MB).
+              formatted per the Prudent Journals guidelines, and saved as a Word document (.docx, max 100MB).
+              The typeset PDF is produced by the editorial team once your paper is accepted.
             </div>
           </div>
 
@@ -275,9 +277,9 @@ export default function SubmitPage() {
                       <Upload className="w-6 h-6 text-navy-500" />
                     </div>
                     <p className="text-sm font-medium text-navy-700">
-                      {isDragActive ? 'Drop your PDF here' : 'Drag & drop your PDF, or click to browse'}
+                      {isDragActive ? 'Drop your document here' : 'Drag & drop your Word document, or click to browse'}
                     </p>
-                    <p className="text-xs text-navy-400 mt-1">PDF only · Max 10MB</p>
+                    <p className="text-xs text-navy-400 mt-1">{MANUSCRIPT_HINT}</p>
                   </div>
                 )}
               </div>

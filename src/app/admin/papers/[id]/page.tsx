@@ -9,6 +9,7 @@ import { papersApi, usersApi } from '@/lib/api';
 import { Paper, Review, User } from '@/types';
 import { getStatusColor, getStatusLabel, formatDate, getErrorMessage } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { MANUSCRIPT_ACCEPT_ATTR, PDF_ACCEPT, MAX_DOCUMENT_SIZE } from '@/lib/uploads';
 
 export default function AdminPaperDetailPage() {
   const params = useParams();
@@ -43,8 +44,9 @@ export default function AdminPaperDetailPage() {
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop: (files) => files[0] && setPublishFile(files[0]),
-    accept: { 'application/pdf': ['.pdf'] },
+    accept: PDF_ACCEPT,
     maxFiles: 1,
+    maxSize: MAX_DOCUMENT_SIZE,
   });
 
   const handleStatusChange = async (status: string, extra?: object) => {
@@ -168,7 +170,7 @@ export default function AdminPaperDetailPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <input
                     type="file"
-                    accept="application/pdf"
+                    accept={MANUSCRIPT_ACCEPT_ATTR}
                     onChange={(e) => setReplaceFile(e.target.files?.[0] || null)}
                     className="font-sans text-xs text-navy-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-navy-900 file:text-parchment-50 file:text-xs file:cursor-pointer"
                   />
@@ -300,15 +302,16 @@ export default function AdminPaperDetailPage() {
                 <Upload className="w-4 h-4 text-gold-600" /> Publish Paper
               </h3>
               <p className="text-xs text-navy-500 mb-3">
-                Publishes the current document. Upload a file only if you want to replace it;
-                otherwise the reviewer's final version, or the original submission, is used.
+                Upload the final typeset PDF. Manuscripts are submitted and reviewed as Word
+                documents, so a PDF is required here unless one has already been put on the
+                paper.
               </p>
               <div {...getRootProps()} className="border-2 border-dashed border-gold-300 rounded-xl p-4 text-center cursor-pointer hover:bg-gold-50 transition-colors mb-3">
                 <input {...getInputProps()} />
                 {publishFile ? (
                   <p className="text-xs text-green-700 font-medium">{publishFile.name}</p>
                 ) : (
-                  <p className="text-xs text-navy-500">Drop final PDF here (optional)</p>
+                  <p className="text-xs text-navy-500">Drop the final typeset PDF here</p>
                 )}
               </div>
 

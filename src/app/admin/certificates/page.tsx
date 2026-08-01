@@ -258,7 +258,7 @@ export default function AdminCertificatesPage() {
         ) : (
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm font-sans">
+              <table className="w-full min-w-[880px] text-sm font-sans">
                 <thead className="bg-parchment-100 border-b border-parchment-200">
                   <tr className="text-left text-navy-500">
                     <th className="px-5 py-3 font-medium">Recipient</th>

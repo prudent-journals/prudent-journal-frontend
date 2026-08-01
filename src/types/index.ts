@@ -13,6 +13,32 @@ export type PaperStatus =
   | 'published';
 export type ReviewDecision = 'accept' | 'reject' | 'revision';
 export type ConferenceStatus = 'upcoming' | 'open' | 'closed' | 'completed';
+
+/** What someone registers as. The conference fee is a function of this. */
+export type RegistrantCategory =
+  | 'asup_internal'
+  | 'asup_external'
+  | 'asuu'
+  | 'corporate'
+  | 'private'
+  | 'student_undergraduate'
+  | 'student_postgraduate';
+
+export const REGISTRANT_CATEGORIES: { value: RegistrantCategory; label: string; hint: string }[] = [
+  { value: 'asup_internal', label: 'ASUP member (internal)', hint: 'Staff of the host polytechnic' },
+  { value: 'asup_external', label: 'ASUP member (external)', hint: 'Staff of any other polytechnic' },
+  { value: 'asuu', label: 'ASUU member', hint: 'University academic staff' },
+  { value: 'corporate', label: 'Corporate organisation', hint: 'Attending on behalf of a company' },
+  { value: 'private', label: 'Private participant', hint: 'Attending in a personal capacity' },
+  { value: 'student_undergraduate', label: 'Student (undergraduate)', hint: 'With a valid student ID' },
+  { value: 'student_postgraduate', label: 'Student (postgraduate)', hint: 'With a valid student ID' },
+];
+
+/** Courtesy titles offered on the conference registration form. */
+export const PERSON_TITLES = [
+  'Prof.', 'Assoc. Prof.', 'Dr.', 'Engr.', 'Arc.', 'Barr.',
+  'Rev.', 'Chief', 'Mr.', 'Mrs.', 'Ms.', 'Miss',
+] as const;
 export type NotificationType =
   | 'submission' | 'review_assigned' | 'feedback' | 'revision_request'
   | 'accepted' | 'rejected' | 'published' | 'conference' | 'general';
@@ -112,7 +138,13 @@ export interface Conference {
   banner_url?: string;
   proceedings_url?: string;
   max_registrations?: number;
+  /** Legacy single fee, used when no per-category table is set. */
   registration_fee?: string;
+  /** Amount per registrant category. A missing key means the category is not offered. */
+  registration_fees?: Partial<Record<RegistrantCategory, string>> | null;
+  currency?: string;
+  payment_instructions?: string;
+  payment_proof_email?: string;
   created_at: string;
 }
 
@@ -157,14 +189,34 @@ export interface Notification {
 
 export interface Registration {
   id: number;
-  user_id: number;
+  /** Null when the registrant has no platform account. */
+  user_id?: number | null;
   conference_id: number;
+  title?: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  institution?: string;
+  category: RegistrantCategory;
+  fee_amount?: string | null;
+  currency?: string | null;
   status: string;
   payment_status: string;
   registration_number?: string;
   notes?: string;
   created_at: string;
   user?: UserPublic;
+}
+
+/** What the public registration form submits. */
+export interface RegistrationRequest {
+  title?: string;
+  full_name?: string;
+  email?: string;
+  phone?: string;
+  institution?: string;
+  category: RegistrantCategory;
+  notes?: string;
 }
 
 export type CertificateKind = 'attendance' | 'presentation' | 'publication';
@@ -175,9 +227,10 @@ export interface Certificate {
   kind: CertificateKind;
   status: CertificateStatus;
   reference: string;
-  user_id: number;
+  user_id?: number | null;
   conference_id?: number | null;
   paper_id?: number | null;
+  registration_id?: number | null;
   recipient_name: string;
   recipient_email: string;
   subject_title?: string | null;
@@ -191,11 +244,14 @@ export interface Certificate {
 
 export interface CertificatePreviewItem {
   kind: CertificateKind;
-  user_id: number;
+  user_id?: number | null;
+  registration_id?: number | null;
   recipient_name: string;
   recipient_email: string;
   subject_title?: string | null;
   already_issued: boolean;
+  /** No platform account: reachable by email only. */
+  is_guest?: boolean;
 }
 
 export interface CertificatePreview {

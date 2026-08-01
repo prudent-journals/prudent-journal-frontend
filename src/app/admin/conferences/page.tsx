@@ -8,7 +8,9 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Calendar, Plus, X, MapPin, Users, ExternalLink } from 'lucide-react';
 import { conferencesApi } from '@/lib/api';
-import { Conference, ConferenceStatus } from '@/types';
+import {
+  Conference, ConferenceStatus, RegistrantCategory, REGISTRANT_CATEGORIES,
+} from '@/types';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 
 const schema = z.object({
@@ -20,7 +22,9 @@ const schema = z.object({
   end_date: z.string().optional(),
   submission_deadline: z.string().optional(),
   registration_deadline: z.string().optional(),
-  registration_fee: z.string().optional(),
+  currency: z.string().optional(),
+  payment_instructions: z.string().optional(),
+  payment_proof_email: z.string().email('Enter a valid email address').or(z.literal('')).optional(),
   status: z.enum(['upcoming', 'open', 'closed', 'completed']),
 });
 
@@ -40,8 +44,16 @@ export default function AdminConferencesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
+  // Fee per registrant category. A category left blank is not offered on the
+  // public registration form at all, which is how an organiser restricts who
+  // may attend.
+  const [fees, setFees] = useState<Partial<Record<RegistrantCategory, string>>>({});
+
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } =
-    useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { status: 'upcoming' } });
+    useForm<FormValues>({
+      resolver: zodResolver(schema),
+      defaultValues: { status: 'upcoming', currency: 'NGN' },
+    });
 
   const load = () =>
     conferencesApi.list()
@@ -52,16 +64,23 @@ export default function AdminConferencesPage() {
   useEffect(() => { load(); }, []);
 
   const onSubmit = async (values: FormValues) => {
+    // Drop blank amounts so an unpriced category is simply absent.
+    const registration_fees = Object.fromEntries(
+      Object.entries(fees).filter(([, amount]) => amount && amount.trim()),
+    );
     try {
       await conferencesApi.create({
         ...values,
+        payment_proof_email: values.payment_proof_email || undefined,
+        registration_fees,
         start_date: toIso(values.start_date),
         end_date: toIso(values.end_date),
         submission_deadline: toIso(values.submission_deadline),
         registration_deadline: toIso(values.registration_deadline),
       });
       toast.success('Conference created');
-      reset({ status: 'upcoming' });
+      reset({ status: 'upcoming', currency: 'NGN' });
+      setFees({});
       setShowForm(false);
       load();
     } catch (err) {
@@ -121,8 +140,8 @@ export default function AdminConferencesPage() {
               <input {...register('venue')} className="input-base" />
             </div>
             <div>
-              <label className="block font-sans text-sm font-medium text-navy-800 mb-1.5">Registration fee</label>
-              <input {...register('registration_fee')} className="input-base" placeholder="NGN 25,000" />
+              <label className="block font-sans text-sm font-medium text-navy-800 mb-1.5">Currency</label>
+              <input {...register('currency')} className="input-base" placeholder="NGN" />
             </div>
             <div>
               <label className="block font-sans text-sm font-medium text-navy-800 mb-1.5">Starts</label>
@@ -140,6 +159,69 @@ export default function AdminConferencesPage() {
               <label className="block font-sans text-sm font-medium text-navy-800 mb-1.5">Registration deadline</label>
               <input type="date" {...register('registration_deadline')} className="input-base" />
             </div>
+          </div>
+
+          {/* Fees drive the public form: a category with no amount is not offered. */}
+          <fieldset className="rounded-2xl border border-parchment-300 p-5 bg-parchment-50">
+            <legend className="px-2 font-sans text-sm font-semibold text-navy-800">
+              Registration fees by category
+            </legend>
+            <p className="font-sans text-xs text-navy-500 mb-4">
+              Set an amount for every category you want to admit. Leave one blank and it
+              will not appear on the registration form. Enter <strong>0</strong> for a
+              category that attends free.
+            </p>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {REGISTRANT_CATEGORIES.map(({ value, label, hint }) => (
+                <div key={value} className="min-w-0">
+                  <label
+                    htmlFor={`fee-${value}`}
+                    className="block font-sans text-sm font-medium text-navy-800"
+                  >
+                    {label}
+                  </label>
+                  <span className="block font-sans text-xs text-navy-400 mb-1.5">{hint}</span>
+                  <input
+                    id={`fee-${value}`}
+                    inputMode="numeric"
+                    value={fees[value] ?? ''}
+                    onChange={(e) => setFees((f) => ({ ...f, [value]: e.target.value }))}
+                    className="input-base"
+                    placeholder="e.g. 25000"
+                  />
+                </div>
+              ))}
+            </div>
+          </fieldset>
+
+          <div>
+            <label className="block font-sans text-sm font-medium text-navy-800 mb-1.5">
+              Payment terms
+            </label>
+            <textarea
+              {...register('payment_instructions')}
+              rows={4}
+              className="input-base resize-y"
+              placeholder={'Bank: ...\nAccount name: ...\nAccount number: ...\nPayment is due within 14 days of registering.'}
+            />
+            <p className="font-sans text-xs text-navy-500 mt-1">
+              Included verbatim in the confirmation email whenever a fee applies.
+            </p>
+          </div>
+
+          <div>
+            <label className="block font-sans text-sm font-medium text-navy-800 mb-1.5">
+              Send proof of payment to
+            </label>
+            <input
+              {...register('payment_proof_email')}
+              type="email"
+              className="input-base"
+              placeholder="payments@prudentjournals.com"
+            />
+            {errors.payment_proof_email && (
+              <p className="text-red-600 text-sm font-sans mt-1">{errors.payment_proof_email.message}</p>
+            )}
           </div>
 
           <div>

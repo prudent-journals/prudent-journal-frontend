@@ -86,7 +86,12 @@ export const conferencesApi = {
   get: (id: number) => api.get(`/conferences/${id}`),
   create: (data: object) => api.post('/conferences', data),
   update: (id: number, data: object) => api.patch(`/conferences/${id}`, data),
-  register: (id: number, data?: object) => api.post(`/conferences/${id}/register`, data || {}),
+  // Open to anyone. The interceptor attaches a token when there is one, and the
+  // backend links the registration to that account; without one it registers a
+  // guest against the email address in the form.
+  register: (id: number, data: object) => api.post(`/conferences/${id}/register`, data),
+  updateRegistration: (regId: number, data: object) =>
+    api.patch(`/conferences/registrations/${regId}`, data),
   myRegistration: (id: number) => api.get(`/conferences/${id}/my-registration`),
   myRegistrations: () => api.get('/conferences/my-registrations'),
   registrations: (id: number) => api.get(`/conferences/${id}/registrations`),

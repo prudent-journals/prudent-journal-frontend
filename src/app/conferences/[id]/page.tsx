@@ -3,10 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, MapPin, Clock, Users, ArrowLeft, CheckCircle, Loader2, FileText } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, ArrowLeft, CheckCircle, Loader2, FileText, Mail } from 'lucide-react';
 import PdfReaderPanel from '@/components/pdf/PdfReaderPanel';
 import { conferencesApi } from '@/lib/api';
-import { Conference, Registration } from '@/types';
+import {
+  Conference, Registration, RegistrantCategory,
+  REGISTRANT_CATEGORIES, PERSON_TITLES,
+} from '@/types';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 import { useAuthStore } from '@/lib/auth-store';
 import Navbar from '@/components/layout/Navbar';
@@ -21,7 +24,13 @@ export default function ConferenceDetailPage() {
   const [myReg, setMyReg] = useState<Registration | null>(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
-  const [notes, setNotes] = useState('');
+
+  // Attending does not require an account. A signed in visitor gets the form
+  // pre-filled from their profile; everyone else simply fills it in.
+  const [form, setForm] = useState({
+    title: '', full_name: '', email: '', phone: '', institution: '',
+    category: 'private' as RegistrantCategory, notes: '',
+  });
 
   useEffect(() => {
     conferencesApi.get(parseInt(id as string)).then(r => setConf(r.data)).finally(() => setLoading(false));
@@ -30,13 +39,60 @@ export default function ConferenceDetailPage() {
     }
   }, [id, user]);
 
-  const handleRegister = async () => {
-    if (!user) { toast.error('Please sign in to register'); return; }
+  useEffect(() => {
+    if (!user) return;
+    setForm((f) => ({
+      ...f,
+      full_name: f.full_name || user.full_name || '',
+      email: f.email || user.email || '',
+      phone: f.phone || user.phone || '',
+      institution: f.institution || user.institution || '',
+    }));
+  }, [user]);
+
+  const set = (k: keyof typeof form) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+  ) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  // The amount for the chosen category, falling back to the conference's single
+  // fee when no per-category table has been configured.
+  const feeTable = conf?.registration_fees || null;
+  const hasFeeTable = !!feeTable && Object.keys(feeTable).length > 0;
+  const selectedFee = hasFeeTable ? feeTable![form.category] : conf?.registration_fee;
+  const currency = conf?.currency || 'NGN';
+
+  // Per-category amounts are bare numbers and want the currency in front. The
+  // legacy free-text fee is written by hand and usually already carries it, so
+  // prefixing unconditionally would render "NGN NGN 25,000".
+  const money = (amount?: string | null) => {
+    if (!amount) return '';
+    return /[a-z$€£₦]/i.test(amount) ? amount : `${currency} ${amount}`;
+  };
+
+  // Only offer categories the organiser actually priced.
+  const offered = hasFeeTable
+    ? REGISTRANT_CATEGORIES.filter((c) => feeTable![c.value] !== undefined)
+    : REGISTRANT_CATEGORIES;
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.full_name.trim() || !form.email.trim()) {
+      toast.error('Your name and email address are required');
+      return;
+    }
     setRegistering(true);
     try {
-      const { data } = await conferencesApi.register(parseInt(id as string), { notes });
+      const { data } = await conferencesApi.register(parseInt(id as string), {
+        title: form.title || undefined,
+        full_name: form.full_name.trim(),
+        email: form.email.trim(),
+        phone: form.phone || undefined,
+        institution: form.institution || undefined,
+        category: form.category,
+        notes: form.notes || undefined,
+      });
       setMyReg(data);
-      toast.success('Registered successfully!');
+      toast.success('Registered. Check your email for confirmation.');
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setRegistering(false); }
   };
@@ -110,6 +166,128 @@ export default function ConferenceDetailPage() {
               </div>
             </div>
 
+            {/* Registration. Open to everyone, account or not. */}
+            {canRegister && (
+              <form id="register" onSubmit={handleRegister} className="card p-6 border-2 border-gold-200">
+                <h2 className="font-serif text-xl text-navy-900 mb-1">Register to attend</h2>
+                <p className="font-sans text-sm text-navy-500 mb-5">
+                  You do not need an account. Fill in the form and we will email your
+                  confirmation, the fee for your category and how to pay.
+                  {!user && (
+                    <> Already have an account?{' '}
+                      <Link href="/auth/login" className="text-gold-700 underline">Sign in</Link>{' '}
+                      to have your certificate appear on your dashboard too.
+                    </>
+                  )}
+                </p>
+
+                <div className="space-y-4">
+                  <div className="grid sm:grid-cols-[7rem_1fr] gap-4">
+                    <div>
+                      <label htmlFor="reg-title" className="block font-sans text-sm font-medium text-navy-800 mb-1.5">Title</label>
+                      <select id="reg-title" value={form.title} onChange={set('title')} className="input-base">
+                        <option value="">—</option>
+                        {PERSON_TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="reg-name" className="block font-sans text-sm font-medium text-navy-800 mb-1.5">
+                        Full name <span className="text-red-600">*</span>
+                      </label>
+                      <input id="reg-name" required value={form.full_name} onChange={set('full_name')} className="input-base" />
+                    </div>
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="reg-email" className="block font-sans text-sm font-medium text-navy-800 mb-1.5">
+                        Email <span className="text-red-600">*</span>
+                      </label>
+                      <input id="reg-email" type="email" required value={form.email} onChange={set('email')} className="input-base" />
+                      <p className="text-xs text-navy-400 mt-1">Your confirmation and certificate go here.</p>
+                    </div>
+                    <div>
+                      <label htmlFor="reg-phone" className="block font-sans text-sm font-medium text-navy-800 mb-1.5">Phone</label>
+                      <input id="reg-phone" type="tel" value={form.phone} onChange={set('phone')} className="input-base" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="reg-institution" className="block font-sans text-sm font-medium text-navy-800 mb-1.5">Institution or organisation</label>
+                    <input id="reg-institution" value={form.institution} onChange={set('institution')} className="input-base" />
+                  </div>
+
+                  <fieldset>
+                    <legend className="font-sans text-sm font-medium text-navy-800 mb-2">
+                      Registering as <span className="text-red-600">*</span>
+                    </legend>
+                    <div className="grid sm:grid-cols-2 gap-2">
+                      {offered.map(({ value, label, hint }) => {
+                        const amount = hasFeeTable ? feeTable![value] : undefined;
+                        const active = form.category === value;
+                        return (
+                          <label
+                            key={value}
+                            className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors min-w-0 ${
+                              active
+                                ? 'border-gold-400 bg-gold-50'
+                                : 'border-parchment-300 hover:border-gold-300 hover:bg-parchment-50'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="category"
+                              value={value}
+                              checked={active}
+                              onChange={set('category')}
+                              className="mt-1 accent-gold-600 flex-shrink-0"
+                            />
+                            <span className="min-w-0">
+                              <span className="block text-sm font-medium text-navy-900">{label}</span>
+                              <span className="block text-xs text-navy-400">{hint}</span>
+                              {amount && (
+                                <span className="block text-xs font-semibold text-gold-700 mt-1">
+                                  {money(amount)}
+                                </span>
+                              )}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+
+                  <div>
+                    <label htmlFor="reg-notes" className="block font-sans text-sm font-medium text-navy-800 mb-1.5">
+                      Notes <span className="font-normal text-navy-400">(optional)</span>
+                    </label>
+                    <textarea
+                      id="reg-notes" rows={3} value={form.notes} onChange={set('notes')}
+                      placeholder="Dietary requirements, accessibility needs, anything else we should know."
+                      className="input-base resize-y"
+                    />
+                  </div>
+
+                  {selectedFee && (
+                    <div className="rounded-xl bg-parchment-50 border border-parchment-200 p-4">
+                      <p className="text-sm text-navy-700">
+                        Fee for this category: <strong>{money(selectedFee)}</strong>
+                      </p>
+                      <p className="text-xs text-navy-500 mt-1">
+                        Payment terms and where to send your proof of payment will be in your
+                        confirmation email. Your place is confirmed once payment is verified.
+                      </p>
+                    </div>
+                  )}
+
+                  <button type="submit" disabled={registering} className="btn-gold w-full justify-center py-3 disabled:opacity-60">
+                    {registering && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {registering ? 'Registering' : 'Complete registration'}
+                  </button>
+                </div>
+              </form>
+            )}
+
             {/* Proceedings, readable in place with selective download */}
             {conf.proceedings_url && (
               <div className="card p-6">
@@ -135,37 +313,51 @@ export default function ConferenceDetailPage() {
               </div>
             )}
 
-            {/* Registration */}
-            <div id="register" className={`card p-5 ${canRegister ? 'border-2 border-gold-200' : ''}`}>
+            {/* Registration status and fees */}
+            <div className={`card p-5 ${canRegister ? 'border-2 border-gold-200' : ''}`}>
               <h3 className="font-serif text-base text-navy-900 mb-4">Registration</h3>
               {myReg ? (
                 <div className="text-center">
                   <CheckCircle className="w-10 h-10 text-green-500 mx-auto mb-3" />
-                  <p className="text-sm font-semibold text-green-700 mb-1">You are registered!</p>
-                  <p className="text-xs text-navy-500 font-mono">{myReg.registration_number}</p>
+                  <p className="text-sm font-semibold text-green-700 mb-1">You are registered</p>
+                  <p className="text-xs text-navy-500 font-mono break-all">{myReg.registration_number}</p>
+                  {myReg.fee_amount && (
+                    <p className="text-xs text-navy-500 mt-3">
+                      Fee due: <strong>{money(myReg.fee_amount)}</strong>
+                      <br />
+                      <span className="capitalize">{myReg.payment_status}</span>
+                    </p>
+                  )}
+                  <p className="text-xs text-navy-400 mt-3 inline-flex items-start gap-1.5 text-left">
+                    <Mail className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                    Confirmation sent to {myReg.email}
+                  </p>
                 </div>
               ) : canRegister ? (
                 <div className="space-y-3">
-                  {conf.registration_fee && (
-                    <p className="text-sm text-navy-600">Fee: <strong>{conf.registration_fee}</strong></p>
-                  )}
-                  <textarea
-                    value={notes}
-                    onChange={e => setNotes(e.target.value)}
-                    placeholder="Any special requirements or notes..."
-                    rows={3}
-                    className="input-base text-sm resize-none"
-                  />
-                  {user ? (
-                    <button onClick={handleRegister} disabled={registering} className="btn-gold w-full justify-center">
-                      {registering ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                      {registering ? 'Registering...' : 'Register Now'}
-                    </button>
+                  {hasFeeTable ? (
+                    <>
+                      <p className="text-xs text-navy-500">Fees by category:</p>
+                      <ul className="space-y-1.5">
+                        {offered.map(({ value, label }) => (
+                          <li key={value} className="flex items-baseline justify-between gap-3 text-sm min-w-0">
+                            <span className="text-navy-600 min-w-0 truncate">{label}</span>
+                            <span className="font-semibold text-navy-900 flex-shrink-0">
+                              {money(feeTable![value])}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : conf.registration_fee ? (
+                    <p className="text-sm text-navy-600">Fee: <strong>{money(conf.registration_fee)}</strong></p>
                   ) : (
-                    <Link href="/auth/login" className="btn-primary w-full justify-center text-sm">
-                      Sign In to Register
-                    </Link>
+                    <p className="text-sm text-navy-600">No registration fee.</p>
                   )}
+                  <a href="#register" className="btn-gold w-full justify-center text-sm">
+                    Register to attend
+                  </a>
+                  <p className="text-xs text-navy-400 text-center">No account required.</p>
                 </div>
               ) : (
                 <p className="text-sm text-navy-500 text-center py-4">

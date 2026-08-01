@@ -6,18 +6,18 @@ import { useParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Users, Upload, FileText, MapPin, Calendar } from 'lucide-react';
 import { conferencesApi } from '@/lib/api';
-import { Conference } from '@/types';
+import { Conference, Registration, REGISTRANT_CATEGORIES } from '@/types';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 
-interface Registration {
-  id: number;
-  user_id: number;
-  status: string;
-  payment_status: string;
-  registration_number?: string;
-  created_at: string;
-  user?: { full_name: string; email: string; institution?: string };
-}
+const CATEGORY_LABEL = Object.fromEntries(
+  REGISTRANT_CATEGORIES.map((c) => [c.value, c.label]),
+) as Record<string, string>;
+
+const PAYMENT_STYLE: Record<string, string> = {
+  paid: 'bg-green-100 text-green-700',
+  unpaid: 'bg-amber-100 text-amber-700',
+  waived: 'bg-navy-100 text-navy-600',
+};
 
 export default function ConferenceRegistrationsPage() {
   const params = useParams();
@@ -38,6 +38,23 @@ export default function ConferenceRegistrationsPage() {
       .finally(() => setLoading(false));
 
   useEffect(() => { load(); }, [id]);
+
+  // Recording payment is how an administrator confirms a place, since proof of
+  // payment arrives by email rather than through the platform.
+  const setPayment = async (reg: Registration, payment_status: string) => {
+    setRegistrations((rows) =>
+      rows.map((r) => (r.id === reg.id ? { ...r, payment_status } : r)),
+    );
+    try {
+      await conferencesApi.updateRegistration(reg.id, { payment_status });
+      toast.success(`Marked ${payment_status}`);
+    } catch (err) {
+      setRegistrations((rows) =>
+        rows.map((r) => (r.id === reg.id ? { ...r, payment_status: reg.payment_status } : r)),
+      );
+      toast.error(getErrorMessage(err));
+    }
+  };
 
   const uploadProceedings = async () => {
     if (!file) return;
@@ -116,11 +133,14 @@ export default function ConferenceRegistrationsPage() {
         ) : (
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm font-sans">
+              <table className="w-full min-w-[980px] text-sm font-sans">
                 <thead className="bg-parchment-100 border-b border-parchment-200">
                   <tr className="text-left text-navy-500">
                     <th className="px-5 py-3 font-medium">Name</th>
+                    <th className="px-5 py-3 font-medium">Category</th>
                     <th className="px-5 py-3 font-medium">Institution</th>
+                    <th className="px-5 py-3 font-medium">Fee</th>
+                    <th className="px-5 py-3 font-medium">Payment</th>
                     <th className="px-5 py-3 font-medium">Reference</th>
                     <th className="px-5 py-3 font-medium">Registered</th>
                   </tr>
@@ -129,12 +149,36 @@ export default function ConferenceRegistrationsPage() {
                   {registrations.map((reg) => (
                     <tr key={reg.id} className="hover:bg-parchment-50">
                       <td className="px-5 py-3">
-                        <p className="text-navy-900 font-medium">{reg.user?.full_name || `User #${reg.user_id}`}</p>
-                        {reg.user?.email && <p className="text-navy-400 text-xs">{reg.user.email}</p>}
+                        <p className="text-navy-900 font-medium whitespace-nowrap">
+                          {[reg.title, reg.full_name].filter(Boolean).join(' ')}
+                        </p>
+                        <p className="text-navy-400 text-xs">{reg.email}</p>
+                        {!reg.user_id && (
+                          <span className="badge bg-parchment-200 text-navy-500 mt-1 inline-block">Guest</span>
+                        )}
                       </td>
-                      <td className="px-5 py-3 text-navy-600">{reg.user?.institution || '-'}</td>
-                      <td className="px-5 py-3 font-mono text-xs text-navy-600">{reg.registration_number || '-'}</td>
-                      <td className="px-5 py-3 text-navy-500">{formatDate(reg.created_at)}</td>
+                      <td className="px-5 py-3 text-navy-600">
+                        {CATEGORY_LABEL[reg.category] || reg.category}
+                      </td>
+                      <td className="px-5 py-3 text-navy-600">{reg.institution || '-'}</td>
+                      <td className="px-5 py-3 text-navy-700 whitespace-nowrap">
+                        {reg.fee_amount ? `${reg.currency || 'NGN'} ${reg.fee_amount}` : '-'}
+                      </td>
+                      <td className="px-5 py-3">
+                        <select
+                          value={reg.payment_status}
+                          onChange={(e) => setPayment(reg, e.target.value)}
+                          className={`badge cursor-pointer border-0 appearance-none ${
+                            PAYMENT_STYLE[reg.payment_status] || 'bg-parchment-200 text-navy-600'
+                          }`}
+                        >
+                          <option value="unpaid">Unpaid</option>
+                          <option value="paid">Paid</option>
+                          <option value="waived">Waived</option>
+                        </select>
+                      </td>
+                      <td className="px-5 py-3 font-mono text-xs text-navy-600 whitespace-nowrap">{reg.registration_number || '-'}</td>
+                      <td className="px-5 py-3 text-navy-500 whitespace-nowrap">{formatDate(reg.created_at)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -3,10 +3,11 @@ import { Metadata } from 'next';
 import {
   BookOpen, Users, Award, Globe, ArrowRight, FileText, Calendar, ChevronRight,
   UploadCloud, SearchCheck, PenLine, BadgeCheck, ShieldCheck, Link2, Quote,
-  Sprout, Cpu, Droplets, HeartPulse, Landmark, Zap, UserCheck, Library,
+  UserCheck, Library,
   Eye, Download, Sparkles, ArrowDown, Quote as QuoteIcon,
 } from 'lucide-react';
 import { publicationsApi, conferencesApi } from '@/lib/api';
+import { JOURNALS } from '@/lib/journals';
 import { Publication, Conference } from '@/types';
 import { formatDate, truncate } from '@/lib/utils';
 import Navbar from '@/components/layout/Navbar';
@@ -272,31 +273,41 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <p className="text-gold-600 text-sm font-sans font-semibold uppercase tracking-widest mb-2">Research Areas</p>
-            <h2 className="font-serif text-3xl lg:text-4xl text-navy-900">Browse by Discipline</h2>
+            <h2 className="font-serif text-3xl lg:text-4xl text-navy-900">Our Journals</h2>
             <p className="text-navy-500 font-sans mt-3 max-w-xl mx-auto leading-relaxed">
-              Explore the fields represented in our catalogue, spanning applied science,
-              engineering, environment, health and public policy.
+              Three peer-reviewed titles, each with its own editorial focus. Browse a
+              journal to see everything published under it.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {[
-              { icon: Sprout, label: 'Agriculture', q: 'agriculture' },
-              { icon: Cpu, label: 'Computing', q: 'machine learning' },
-              { icon: Zap, label: 'Energy', q: 'energy' },
-              { icon: Droplets, label: 'Environment', q: 'environmental' },
-              { icon: HeartPulse, label: 'Health', q: 'health' },
-              { icon: Landmark, label: 'Governance', q: 'governance' },
-            ].map(({ icon: Icon, label, q }) => (
+          <div className="grid md:grid-cols-3 gap-6">
+            {JOURNALS.map(({ icon: Icon, title, blurb, topics, q }) => (
               <Link
-                key={label}
+                key={title}
                 href={`/publications?search=${encodeURIComponent(q)}`}
-                className="group card p-5 flex flex-col items-center gap-3 text-center hover:border-gold-400 transition-colors min-w-0"
+                className="group card p-7 flex flex-col hover:border-gold-400 hover:shadow-lg transition-all min-w-0"
               >
-                <div className="w-11 h-11 rounded-xl bg-navy-50 flex items-center justify-center group-hover:bg-gold-50 transition-colors">
-                  <Icon className="w-5 h-5 text-navy-700 group-hover:text-gold-700 transition-colors" />
+                <div className="w-12 h-12 rounded-2xl bg-navy-900 flex items-center justify-center mb-5 group-hover:bg-gold-500 transition-colors">
+                  <Icon className="w-6 h-6 text-gold-400 group-hover:text-navy-900 transition-colors" />
                 </div>
-                <span className="font-sans text-sm font-medium text-navy-800">{label}</span>
+                <h3 className="font-serif text-xl text-navy-900 leading-snug mb-2 group-hover:text-gold-700 transition-colors">
+                  {title}
+                </h3>
+                <p className="font-sans text-sm text-navy-500 leading-relaxed mb-5">{blurb}</p>
+                <ul className="mt-auto flex flex-wrap gap-1.5">
+                  {topics.map((t) => (
+                    <li
+                      key={t}
+                      className="font-sans text-xs text-navy-600 bg-parchment-100 border border-parchment-300 rounded-full px-2.5 py-1"
+                    >
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+                <span className="mt-5 inline-flex items-center gap-1.5 font-sans text-sm font-medium text-gold-700">
+                  Browse the journal
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </span>
               </Link>
             ))}
           </div>

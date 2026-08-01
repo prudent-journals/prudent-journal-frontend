@@ -81,7 +81,7 @@ export default function AdminPapersPage() {
       {/* Table */}
       <div className="card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[960px]">
             <thead className="bg-parchment-50 border-b border-parchment-200">
               <tr>
                 <th className="text-left px-6 py-3 text-xs font-semibold text-navy-500 uppercase tracking-wider">Paper</th>
