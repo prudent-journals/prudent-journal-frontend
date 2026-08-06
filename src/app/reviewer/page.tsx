@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ClipboardList, CheckCircle2, Clock, ArrowRight, Star, Eye, Gauge } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Clock, ArrowRight, Star, Eye, Gauge, TrendingUp } from 'lucide-react';
 import { papersApi } from '@/lib/api';
 import { Paper, Review, ReviewDecision } from '@/types';
 import { formatDate, getStatusLabel, getStatusColor } from '@/lib/utils';
@@ -29,6 +29,25 @@ const CRITERIA: [ScoreKey, string][] = [
   ['clarity_score', 'Clarity'],
   ['relevance_score', 'Relevance'],
 ];
+
+function monthlyTrend(reviews: Review[]): { key: string; label: string; count: number }[] {
+  const now = new Date();
+  const buckets = Array.from({ length: 6 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+    return {
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleDateString('en-US', { month: 'short' }),
+      count: 0,
+    };
+  });
+  reviews.forEach((r) => {
+    const d = new Date(r.created_at);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const bucket = buckets.find((b) => b.key === key);
+    if (bucket) bucket.count += 1;
+  });
+  return buckets;
+}
 
 function average(reviews: Review[], key: ScoreKey): number {
   const values = reviews.map((r) => r[key]).filter((v): v is number => typeof v === 'number');
@@ -57,6 +76,9 @@ export default function ReviewerOverviewPage() {
   const decisionCounts: Record<ReviewDecision, number> = { accept: 0, revision: 0, reject: 0 };
   reviews.forEach((r) => { decisionCounts[r.decision] = (decisionCounts[r.decision] || 0) + 1; });
   const maxDecision = Math.max(1, ...DECISION_ORDER.map((d) => decisionCounts[d]));
+
+  const trend = monthlyTrend(reviews);
+  const maxTrend = Math.max(1, ...trend.map((t) => t.count));
 
   const statCards = [
     { label: 'Awaiting Your Review', value: awaiting.length, icon: Clock, tone: 'text-gold-700 bg-gold-50', href: '/reviewer/queue' },
@@ -91,7 +113,7 @@ export default function ReviewerOverviewPage() {
       </div>
 
       {reviews.length > 0 && (
-        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid lg:grid-cols-3 gap-6 mb-8">
           {/* Decision breakdown */}
           <div className="card p-6">
             <h2 className="font-serif text-lg text-navy-900 mb-1">Your Recommendations</h2>
@@ -140,6 +162,27 @@ export default function ReviewerOverviewPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Reviews trend */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-serif text-lg text-navy-900">Reviews Trend</h2>
+              <TrendingUp className="w-4 h-4 text-navy-400" />
+            </div>
+            <p className="text-xs text-navy-400 font-sans mb-5">Last six months</p>
+            <div className="flex items-end justify-between gap-2 h-40">
+              {trend.map((m) => (
+                <div key={m.key} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                  <span className="text-xs font-semibold text-navy-700">{m.count}</span>
+                  <div
+                    className="w-full max-w-10 rounded-t-lg bg-gold-500 transition-all"
+                    style={{ height: `${Math.max(4, (m.count / maxTrend) * 100)}%` }}
+                  />
+                  <span className="text-[11px] text-navy-400 font-sans">{m.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

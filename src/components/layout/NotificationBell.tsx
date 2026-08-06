@@ -81,7 +81,12 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 max-w-[85vw] card p-0 z-50 overflow-hidden animate-fade-in">
+        // This bell sits two places: the mobile top bar, hugging the right
+        // edge of the screen (right-0 fits), and the desktop sidebar, only
+        // ~256px wide near the left edge of the screen - right-0 there would
+        // push a 320px panel off screen to the left, so it flips to grow
+        // rightward into the main content instead.
+        <div className="absolute right-0 md:right-auto md:left-0 top-full mt-2 w-80 max-w-[85vw] card p-0 z-50 overflow-hidden animate-fade-in">
           <div className="flex items-center justify-between px-4 py-3 border-b border-parchment-200">
             <p className="font-serif text-navy-900">Notifications</p>
             {unread > 0 && (
