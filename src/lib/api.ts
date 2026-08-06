@@ -67,6 +67,9 @@ export const papersApi = {
   getReviews: (paperId: number) => api.get(`/papers/${paperId}/reviews`),
   submitReview: (paperId: number, data: object) => api.post(`/papers/${paperId}/reviews`, data),
   shareReview: (paperId: number, reviewId: number) => api.patch(`/papers/${paperId}/reviews/${reviewId}/share`),
+  // Chief editor dashboard
+  editorReviewers: () => api.get('/papers/editor/reviewers'),
+  editorStats: () => api.get('/papers/editor/stats'),
 };
 
 // Publications

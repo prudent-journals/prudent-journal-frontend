@@ -1,8 +1,9 @@
 // Enums
 
-/** Three roles and no more: admin runs everything, reviewer reviews, user
- *  submits (shown as "Author"). */
-export type UserRole = 'admin' | 'reviewer' | 'user';
+/** Four roles: admin runs everything, chief_editor assigns reviewers and
+ *  authorizes acceptance but never publishes, reviewer reviews, user submits
+ *  (shown as "Author"). */
+export type UserRole = 'admin' | 'chief_editor' | 'reviewer' | 'user';
 export type PaperType = 'journal' | 'conference';
 export type PaperStatus =
   | 'submitted'
@@ -130,6 +131,33 @@ export interface Review {
   created_at: string;
   reviewer?: UserPublic;
   paper_title?: string | null;
+}
+
+// Chief editor dashboard
+
+export interface ReviewerOption {
+  id: number;
+  full_name: string;
+  email: string;
+  active_assignments: number;
+}
+
+export interface ReviewerWorkload {
+  reviewer_id: number;
+  reviewer_name: string;
+  active_assignments: number;
+  completed_reviews: number;
+}
+
+export interface MonthlySubmissions {
+  month: string;
+  count: number;
+}
+
+export interface EditorStats {
+  status_counts: Record<string, number>;
+  reviewer_workload: ReviewerWorkload[];
+  monthly_submissions: MonthlySubmissions[];
 }
 
 // Conference

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, BookOpen, Bell, ChevronDown, LogOut, User, Settings, LayoutDashboard } from 'lucide-react';
-import { useAuthStore, isAdmin, isReviewer } from '@/lib/auth-store';
+import { useAuthStore, isAdmin, isChiefEditor, isReviewer } from '@/lib/auth-store';
 import { usersApi } from '@/lib/api';
 import { cn, getInitials } from '@/lib/utils';
 
@@ -112,6 +112,11 @@ export default function Navbar() {
                         <Settings className="w-4 h-4" /> Admin Panel
                       </Link>
                     )}
+                    {isChiefEditor(user) && (
+                      <Link href="/chief-editor" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-parchment-100 text-sm text-navy-700 transition-colors">
+                        <LayoutDashboard className="w-4 h-4" /> Chief Editor
+                      </Link>
+                    )}
                     {isReviewer(user) && (
                       <Link href="/reviewer" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-parchment-100 text-sm text-navy-700 transition-colors">
                         <LayoutDashboard className="w-4 h-4" /> Reviewer Area
@@ -165,6 +170,9 @@ export default function Navbar() {
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="btn-outline text-center text-sm">Dashboard</Link>
                 {isAdmin(user) && (
                   <Link href="/admin" onClick={() => setMenuOpen(false)} className="btn-outline text-center text-sm">Admin Panel</Link>
+                )}
+                {isChiefEditor(user) && (
+                  <Link href="/chief-editor" onClick={() => setMenuOpen(false)} className="btn-outline text-center text-sm">Chief Editor</Link>
                 )}
                 {isReviewer(user) && (
                   <Link href="/reviewer" onClick={() => setMenuOpen(false)} className="btn-outline text-center text-sm">Reviewer Area</Link>

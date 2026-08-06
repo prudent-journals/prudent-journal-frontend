@@ -34,6 +34,8 @@ export default function LoginPage() {
       const role = useAuthStore.getState().user?.role;
       if (role === 'admin') {
         router.push('/admin');
+      } else if (role === 'chief_editor') {
+        router.push('/chief-editor');
       } else if (role === 'reviewer') {
         router.push('/reviewer');
       } else {

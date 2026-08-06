@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, BookOpen, Calendar, Upload, User, LayoutDashboard } from 'lucide-react';
-import { useAuthStore, isAdmin, isReviewer } from '@/lib/auth-store';
+import { useAuthStore, isAdmin, isChiefEditor, isReviewer } from '@/lib/auth-store';
 import { cn } from '@/lib/utils';
 
 /**
@@ -18,7 +18,7 @@ export default function MobileNav() {
   const { user, hasHydrated } = useAuthStore();
 
   // Areas that carry their own navigation must not get a second bar.
-  const ownsNavigation = ['/dashboard', '/admin', '/reviewer', '/auth'];
+  const ownsNavigation = ['/dashboard', '/admin', '/chief-editor', '/reviewer', '/auth'];
   if (ownsNavigation.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
 
   interface NavItem {
@@ -32,11 +32,13 @@ export default function MobileNav() {
     ? { href: '/auth/login', label: 'Account', icon: User }
     : isAdmin(user)
       ? { href: '/admin', label: 'Admin', icon: LayoutDashboard }
-      : isReviewer(user)
-        ? { href: '/reviewer', label: 'Reviews', icon: LayoutDashboard }
-        : user
-          ? { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }
-          : { href: '/auth/login', label: 'Sign in', icon: User };
+      : isChiefEditor(user)
+        ? { href: '/chief-editor', label: 'Editor', icon: LayoutDashboard }
+        : isReviewer(user)
+          ? { href: '/reviewer', label: 'Reviews', icon: LayoutDashboard }
+          : user
+            ? { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }
+            : { href: '/auth/login', label: 'Sign in', icon: User };
 
   const items: NavItem[] = [
     { href: '/', label: 'Home', icon: Home, exact: true },

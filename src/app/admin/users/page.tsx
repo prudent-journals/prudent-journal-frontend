@@ -11,10 +11,11 @@ import { formatDate, getRoleLabel, getInitials, getErrorMessage } from '@/lib/ut
 import { useAuthStore } from '@/lib/auth-store';
 import toast from 'react-hot-toast';
 
-const ROLES: UserRole[] = ['user', 'reviewer', 'admin'];
+const ROLES: UserRole[] = ['user', 'reviewer', 'chief_editor', 'admin'];
 
 const roleColors: Record<UserRole, string> = {
   admin: 'bg-gold-100 text-gold-700',
+  chief_editor: 'bg-purple-100 text-purple-700',
   reviewer: 'bg-green-100 text-green-700',
   user: 'bg-gray-100 text-gray-600',
 };

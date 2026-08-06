@@ -50,6 +50,7 @@ export function getStatusLabel(status: PaperStatus): string {
 export function getRoleLabel(role: UserRole): string {
   const map: Record<UserRole, string> = {
     admin: 'Administrator',
+    chief_editor: 'Chief Editor',
     reviewer: 'Reviewer',
     user: 'Author',
   };

@@ -113,9 +113,13 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Role helpers. One administrator role covers the whole admin area, so there
-// is nothing finer to test for than these two.
+// Role helpers.
 export const isAdmin = (user: User | null) => user?.role === 'admin';
+
+// Admin can reach the chief editor's editorial surface too - it is a subset
+// of what admin can already do, just with its own dashboard.
+export const isChiefEditor = (user: User | null) =>
+  user?.role === 'admin' || user?.role === 'chief_editor';
 
 export const isReviewer = (user: User | null) =>
   user?.role === 'admin' || user?.role === 'reviewer';

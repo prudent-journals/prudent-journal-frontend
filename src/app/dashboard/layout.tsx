@@ -7,7 +7,7 @@ import {
   LayoutDashboard, FileText, Bell, User, Upload,
   BookOpen, Calendar, LogOut, ChevronRight, Menu, X
 } from 'lucide-react';
-import { useAuthStore, isAdmin, isReviewer } from '@/lib/auth-store';
+import { useAuthStore, isAdmin, isChiefEditor, isReviewer } from '@/lib/auth-store';
 import { cn, getInitials } from '@/lib/utils';
 
 const navItems = [
@@ -105,11 +105,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </nav>
 
       {/* Cross-links to the other zones this user can reach */}
-      {(isAdmin(user) || isReviewer(user)) && (
+      {(isAdmin(user) || isChiefEditor(user) || isReviewer(user)) && (
         <div className="px-3 pb-2 space-y-1">
           {isAdmin(user) && (
             <Link href="/admin" className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-navy-600 bg-parchment-100 hover:bg-parchment-200 transition-colors">
               <LayoutDashboard className="w-4 h-4" /> Admin Area
+            </Link>
+          )}
+          {isChiefEditor(user) && (
+            <Link href="/chief-editor" className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium text-navy-600 bg-parchment-100 hover:bg-parchment-200 transition-colors">
+              <LayoutDashboard className="w-4 h-4" /> Chief Editor Area
             </Link>
           )}
           {isReviewer(user) && (
