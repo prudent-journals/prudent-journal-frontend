@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, BookOpen, Bell, ChevronDown, LogOut, User, Settings, LayoutDashboard } from 'lucide-react';
-import { useAuthStore, isAdmin } from '@/lib/auth-store';
+import { useAuthStore, isAdmin, isReviewer } from '@/lib/auth-store';
 import { usersApi } from '@/lib/api';
 import { cn, getInitials } from '@/lib/utils';
 
@@ -112,6 +112,11 @@ export default function Navbar() {
                         <Settings className="w-4 h-4" /> Admin Panel
                       </Link>
                     )}
+                    {isReviewer(user) && (
+                      <Link href="/reviewer" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-parchment-100 text-sm text-navy-700 transition-colors">
+                        <LayoutDashboard className="w-4 h-4" /> Reviewer Area
+                      </Link>
+                    )}
                     <Link href="/dashboard/profile" onClick={() => setProfileOpen(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-parchment-100 text-sm text-navy-700 transition-colors">
                       <User className="w-4 h-4" /> Profile
                     </Link>
@@ -158,6 +163,12 @@ export default function Navbar() {
             {user ? (
               <>
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="btn-outline text-center text-sm">Dashboard</Link>
+                {isAdmin(user) && (
+                  <Link href="/admin" onClick={() => setMenuOpen(false)} className="btn-outline text-center text-sm">Admin Panel</Link>
+                )}
+                {isReviewer(user) && (
+                  <Link href="/reviewer" onClick={() => setMenuOpen(false)} className="btn-outline text-center text-sm">Reviewer Area</Link>
+                )}
                 <button onClick={logout} className="btn-ghost text-sm text-red-600 text-center">Sign Out</button>
               </>
             ) : (
