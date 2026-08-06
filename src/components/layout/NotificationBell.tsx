@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { Bell, CheckCheck } from 'lucide-react';
 import { usersApi } from '@/lib/api';
@@ -20,14 +21,26 @@ const TYPE_COLORS: Record<string, string> = {
   general: 'bg-gray-100 text-gray-600',
 };
 
+const PANEL_WIDTH = 320;
+
 // Handoffs between reviewer, chief editor and admin happen here: this bell is
 // the one thing all three staff dashboards share, so a document or decision
 // that moves shows up without anyone needing to be told where to look for it.
+//
+// The panel is portalled to document.body and positioned with measured
+// coordinates rather than an absolute + z-index. The bell lives inside a
+// sticky sidebar, and sticky (like fixed) always opens its own stacking
+// context - so no z-index inside it can ever out-rank a later sibling in
+// the page, such as a stat card whose entrance animation leaves a lingering
+// transform: translateY(0), which does the same thing. A portal sidesteps
+// that class of bug entirely instead of chasing z-index numbers.
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const load = () => {
     usersApi.notifications().then((r) => setNotifications(r.data)).catch(() => {}).finally(() => setLoading(false));
@@ -41,15 +54,36 @@ export default function NotificationBell() {
     return () => clearInterval(interval);
   }, []);
 
+  const updatePosition = () => {
+    const btn = buttonRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const left = Math.max(8, Math.min(rect.right - PANEL_WIDTH, window.innerWidth - PANEL_WIDTH - 8));
+    setCoords({ top: rect.bottom + 8, left });
+  };
+
   useEffect(() => {
     if (!open) return;
+    updatePosition();
+
+    const onReposition = () => updatePosition();
     const onClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (buttonRef.current?.contains(target)) return;
+      if (panelRef.current?.contains(target)) return;
+      setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+
+    // Capture phase so scrolling inside the sidebar's own nav or the main
+    // content area (neither of which bubbles a scroll event) still repositions it.
+    window.addEventListener('scroll', onReposition, true);
+    window.addEventListener('resize', onReposition);
     document.addEventListener('mousedown', onClick);
     document.addEventListener('keydown', onKey);
     return () => {
+      window.removeEventListener('scroll', onReposition, true);
+      window.removeEventListener('resize', onReposition);
       document.removeEventListener('mousedown', onClick);
       document.removeEventListener('keydown', onKey);
     };
@@ -64,8 +98,9 @@ export default function NotificationBell() {
   };
 
   return (
-    <div className="relative" ref={containerRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
@@ -80,13 +115,12 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {open && (
-        // This bell sits two places: the mobile top bar, hugging the right
-        // edge of the screen (right-0 fits), and the desktop sidebar, only
-        // ~256px wide near the left edge of the screen - right-0 there would
-        // push a 320px panel off screen to the left, so it flips to grow
-        // rightward into the main content instead.
-        <div className="absolute right-0 md:right-auto md:left-0 top-full mt-2 w-80 max-w-[85vw] card p-0 z-50 overflow-hidden animate-fade-in">
+      {open && coords && typeof document !== 'undefined' && createPortal(
+        <div
+          ref={panelRef}
+          style={{ top: coords.top, left: coords.left, width: PANEL_WIDTH }}
+          className="fixed max-w-[85vw] card p-0 z-[100] overflow-hidden animate-fade-in"
+        >
           <div className="flex items-center justify-between px-4 py-3 border-b border-parchment-200">
             <p className="font-serif text-navy-900">Notifications</p>
             {unread > 0 && (
@@ -124,8 +158,9 @@ export default function NotificationBell() {
               );
             })}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
