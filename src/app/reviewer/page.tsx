@@ -2,10 +2,39 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ClipboardList, CheckCircle2, Clock, ArrowRight, Star } from 'lucide-react';
+import { ClipboardList, CheckCircle2, Clock, ArrowRight, Star, Eye, Gauge } from 'lucide-react';
 import { papersApi } from '@/lib/api';
-import { Paper, Review } from '@/types';
+import { Paper, Review, ReviewDecision } from '@/types';
 import { formatDate, getStatusLabel, getStatusColor } from '@/lib/utils';
+
+const DECISION_ORDER: ReviewDecision[] = ['accept', 'revision', 'reject'];
+
+const DECISION_LABEL: Record<ReviewDecision, string> = {
+  accept: 'Accept',
+  revision: 'Revision',
+  reject: 'Reject',
+};
+
+const DECISION_BAR: Record<ReviewDecision, string> = {
+  accept: 'bg-green-500',
+  revision: 'bg-orange-500',
+  reject: 'bg-red-500',
+};
+
+type ScoreKey = 'originality_score' | 'methodology_score' | 'clarity_score' | 'relevance_score';
+
+const CRITERIA: [ScoreKey, string][] = [
+  ['originality_score', 'Originality'],
+  ['methodology_score', 'Methodology'],
+  ['clarity_score', 'Clarity'],
+  ['relevance_score', 'Relevance'],
+];
+
+function average(reviews: Review[], key: ScoreKey): number {
+  const values = reviews.map((r) => r[key]).filter((v): v is number => typeof v === 'number');
+  if (values.length === 0) return 0;
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
 
 export default function ReviewerOverviewPage() {
   const [queue, setQueue] = useState<Paper[]>([]);
@@ -23,11 +52,17 @@ export default function ReviewerOverviewPage() {
 
   const reviewedIds = new Set(reviews.map((r) => r.paper_id));
   const awaiting = queue.filter((p) => !reviewedIds.has(p.id));
+  const shared = reviews.filter((r) => r.is_visible_to_author).length;
 
-  const stats = [
-    { label: 'Awaiting your review', value: awaiting.length, icon: Clock, tone: 'text-gold-700 bg-gold-50' },
-    { label: 'Assigned to you', value: queue.length, icon: ClipboardList, tone: 'text-navy-700 bg-navy-50' },
-    { label: 'Reviews completed', value: reviews.length, icon: CheckCircle2, tone: 'text-green-700 bg-green-50' },
+  const decisionCounts: Record<ReviewDecision, number> = { accept: 0, revision: 0, reject: 0 };
+  reviews.forEach((r) => { decisionCounts[r.decision] = (decisionCounts[r.decision] || 0) + 1; });
+  const maxDecision = Math.max(1, ...DECISION_ORDER.map((d) => decisionCounts[d]));
+
+  const statCards = [
+    { label: 'Awaiting Your Review', value: awaiting.length, icon: Clock, tone: 'text-gold-700 bg-gold-50', href: '/reviewer/queue' },
+    { label: 'Assigned to You', value: queue.length, icon: ClipboardList, tone: 'text-navy-700 bg-navy-50', href: '/reviewer/queue' },
+    { label: 'Reviews Completed', value: reviews.length, icon: CheckCircle2, tone: 'text-green-700 bg-green-50', href: '/reviewer/completed' },
+    { label: 'Shared with Author', value: shared, icon: Eye, tone: 'text-purple-700 bg-purple-50', href: '/reviewer/completed' },
   ];
 
   return (
@@ -40,17 +75,75 @@ export default function ReviewerOverviewPage() {
         </p>
       </header>
 
-      <div className="grid sm:grid-cols-3 gap-4 mb-10">
-        {stats.map(({ label, value, icon: Icon, tone }) => (
-          <div key={label} className="card p-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger-children">
+        {statCards.map(({ label, value, icon: Icon, tone, href }) => (
+          <Link key={label} href={href} className="card p-5 hover:shadow-card-hover transition-all group animate-fade-up">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${tone}`}>
               <Icon className="w-5 h-5" />
             </div>
-            <p className="font-display text-3xl text-navy-900 tabular-figures">{loading ? '' : value}</p>
-            <p className="text-sm text-navy-500 font-sans mt-1">{label}</p>
-          </div>
+            <p className="font-display text-2xl text-navy-900 tabular-figures">{loading ? '' : value}</p>
+            <div className="text-navy-500 text-sm font-sans mt-0.5 flex items-center gap-1">
+              {label}
+              <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
         ))}
       </div>
+
+      {reviews.length > 0 && (
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          {/* Decision breakdown */}
+          <div className="card p-6">
+            <h2 className="font-serif text-lg text-navy-900 mb-1">Your Recommendations</h2>
+            <p className="text-xs text-navy-400 font-sans mb-5">{reviews.length} reviews submitted</p>
+            <div className="space-y-3">
+              {DECISION_ORDER.map((d) => {
+                const value = decisionCounts[d];
+                return (
+                  <div key={d} className="flex items-center gap-3">
+                    <span className="w-20 flex-shrink-0 text-sm font-sans text-navy-600">{DECISION_LABEL[d]}</span>
+                    <div className="flex-1 h-2.5 bg-parchment-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${DECISION_BAR[d]} transition-all`}
+                        style={{ width: `${(value / maxDecision) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold text-navy-700 w-6 text-right tabular-figures">{value}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Average scores */}
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="font-serif text-lg text-navy-900">Your Average Scoring</h2>
+              <Gauge className="w-4 h-4 text-navy-400" />
+            </div>
+            <p className="text-xs text-navy-400 font-sans mb-5">Across every criterion you have scored</p>
+            <div className="space-y-3">
+              {CRITERIA.map(([key, label]) => {
+                const value = average(reviews, key);
+                return (
+                  <div key={key} className="flex items-center gap-3">
+                    <span className="w-28 flex-shrink-0 text-sm font-sans text-navy-600">{label}</span>
+                    <div className="flex-1 h-2.5 bg-parchment-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gold-500 transition-all"
+                        style={{ width: `${(value / 10) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-semibold text-navy-700 w-10 text-right tabular-figures">
+                      {value.toFixed(1)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="mb-10">
         <div className="flex items-end justify-between mb-4">
@@ -67,7 +160,7 @@ export default function ReviewerOverviewPage() {
             <CheckCircle2 className="w-10 h-10 mx-auto mb-3 text-green-600/40" />
             <p className="font-sans text-navy-600">Nothing waiting on you right now.</p>
             <p className="font-sans text-sm text-navy-400 mt-1">
-              You will be notified by email when a paper is assigned.
+              You will be notified when a paper is assigned.
             </p>
           </div>
         ) : (

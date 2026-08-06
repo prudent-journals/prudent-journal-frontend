@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore, isReviewer } from '@/lib/auth-store';
 import { cn, getInitials, getRoleLabel } from '@/lib/utils';
+import NotificationBell from '@/components/layout/NotificationBell';
 
 const reviewerNav = [
   { href: '/reviewer', label: 'Overview', icon: LayoutDashboard, exact: true },
@@ -47,14 +48,17 @@ export default function ReviewerLayout({ children }: { children: React.ReactNode
         </div>
 
         <div className="p-4 border-b border-navy-800">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-gold-500/20 text-gold-400 flex items-center justify-center font-semibold text-sm flex-shrink-0 border border-gold-500/30">
-              {getInitials(user.full_name)}
+          <div className="flex items-center gap-3 justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-full bg-gold-500/20 text-gold-400 flex items-center justify-center font-semibold text-sm flex-shrink-0 border border-gold-500/30">
+                {getInitials(user.full_name)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-parchment-100 truncate">{user.full_name}</p>
+                <p className="text-xs text-navy-400">{getRoleLabel(user.role)}</p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-parchment-100 truncate">{user.full_name}</p>
-              <p className="text-xs text-navy-400">{getRoleLabel(user.role)}</p>
-            </div>
+            <NotificationBell />
           </div>
         </div>
 
@@ -91,7 +95,10 @@ export default function ReviewerLayout({ children }: { children: React.ReactNode
         <Link href="/reviewer" className="font-serif text-parchment-100">
           Prudent<span className="text-gold-400"> Journals</span>
         </Link>
-        <span className="text-xs font-mono text-navy-400 uppercase">Reviewer</span>
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <span className="text-xs font-mono text-navy-400 uppercase">Reviewer</span>
+        </div>
       </div>
 
       <main className="flex-1 min-w-0 overflow-auto bg-parchment-50 pt-14 md:pt-0 pb-20 md:pb-0">

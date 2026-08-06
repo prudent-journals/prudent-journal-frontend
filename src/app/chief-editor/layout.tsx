@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore, isChiefEditor } from '@/lib/auth-store';
 import { cn, getInitials, getRoleLabel } from '@/lib/utils';
+import NotificationBell from '@/components/layout/NotificationBell';
 
 // The chief editor's own turf: assignment and editorial decisions. No users,
 // conferences, certificates, publications or system administration - those
@@ -68,14 +69,17 @@ export default function ChiefEditorLayout({ children }: { children: React.ReactN
       </div>
 
       <div className="p-4 border-b border-navy-800">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-gold-500/20 text-gold-400 flex items-center justify-center font-semibold text-sm flex-shrink-0 border border-gold-500/30">
-            {getInitials(user.full_name)}
+        <div className="flex items-center gap-3 justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-full bg-gold-500/20 text-gold-400 flex items-center justify-center font-semibold text-sm flex-shrink-0 border border-gold-500/30">
+              {getInitials(user.full_name)}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-parchment-100 truncate">{user.full_name.split(' ')[0]}</p>
+              <p className="text-xs text-navy-400">{getRoleLabel(user.role)}</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-parchment-100 truncate">{user.full_name.split(' ')[0]}</p>
-            <p className="text-xs text-navy-400">{getRoleLabel(user.role)}</p>
-          </div>
+          <NotificationBell />
         </div>
       </div>
 
@@ -128,9 +132,12 @@ export default function ChiefEditorLayout({ children }: { children: React.ReactN
         <Link href="/chief-editor" className="font-serif text-parchment-100 truncate">
           Prudent<span className="text-gold-400"> Journals</span>
         </Link>
-        <span className="ml-auto mr-2 text-xs font-mono text-navy-400 uppercase tracking-widest truncate">
-          Chief Editor
-        </span>
+        <div className="ml-auto flex items-center gap-1">
+          <NotificationBell />
+          <span className="mr-1 text-xs font-mono text-navy-400 uppercase tracking-widest truncate">
+            Chief Editor
+          </span>
+        </div>
       </header>
 
       <div
