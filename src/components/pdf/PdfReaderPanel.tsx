@@ -18,10 +18,14 @@ interface Props {
   title?: string;
   /** When present, a completed download is counted against the publication. */
   slug?: string;
+  /** Overrides the publication-download counter with a different one, for
+   * surfaces that aren't a Publication (e.g. conference proceedings). */
+  onDownload?: () => void;
 }
 
-export default function PdfReaderPanel({ url, title, slug }: Props) {
+export default function PdfReaderPanel({ url, title, slug, onDownload }: Props) {
   const recordDownload = () => {
+    if (onDownload) { onDownload(); return; }
     if (!slug) return;
     // Best effort. A failed count must never break the download itself.
     publicationsApi.recordDownload(slug).catch(() => undefined);

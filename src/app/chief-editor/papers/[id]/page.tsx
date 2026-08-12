@@ -101,7 +101,9 @@ export default function ChiefEditorPaperDetailPage() {
         <div className="lg:col-span-2 space-y-6">
           <div className="card p-6">
             <h2 className="font-serif text-lg text-navy-900 mb-3">Abstract</h2>
-            <p className="text-navy-600 font-sans text-sm leading-relaxed">{paper.abstract}</p>
+            <p className="text-navy-600 font-sans text-sm leading-relaxed">
+              {paper.abstract || <span className="italic text-navy-400">No abstract was provided.</span>}
+            </p>
             {paper.keywords && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {paper.keywords.split(',').map((k) => (

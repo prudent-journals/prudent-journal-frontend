@@ -93,7 +93,7 @@ export interface Paper {
   id: number;
   title: string;
   slug: string;
-  abstract: string;
+  abstract?: string;
   keywords?: string;
   authors_str?: string;
   paper_type: PaperType;
@@ -187,13 +187,29 @@ export interface Conference {
   created_at: string;
 }
 
+// Conference book of proceedings
+
+export interface ConferenceProceedings {
+  id: number;
+  conference_id: number;
+  title: string;
+  slug: string;
+  file_url: string;
+  file_type: 'pdf' | 'docx';
+  is_live: boolean;
+  view_count: number;
+  download_count: number;
+  created_at: string;
+  conference_title?: string | null;
+}
+
 // Publication
 
 export interface Publication {
   id: number;
   slug: string;
   title: string;
-  abstract: string;
+  abstract?: string;
   authors: string;
   keywords?: string;
   paper_type: string;
@@ -319,4 +335,6 @@ export interface CertificateSignatory {
   display_order: number;
   is_active: boolean;
   created_at: string;
+  submitted_by_id?: number | null;
+  submitted_by_name?: string | null;
 }

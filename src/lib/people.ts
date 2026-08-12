@@ -49,7 +49,7 @@ export const DIRECTORS: Person[] = [
 export const EDITORIAL_BOARD: Person[] = [
   {
     name: 'Engr. Dr Nte N. Isioto',
-    role: 'Editorial Management Board',
+    role: 'Editor-in-Chief',
     credentials: 'MNSE, COREN, IEEE, NIEEE',
     qualifications: 'PhD, Electronic and Communication Engineering',
     affiliation: 'Kenule Beeson Saro-Wiwa Polytechnic, Bori, Rivers State',
@@ -99,14 +99,6 @@ export const EDITORIAL_BOARD: Person[] = [
       'Industrial relations and human resource management',
       'Citizenship education',
     ],
-  },
-  {
-    name: 'Dr Dennis L. T. Bale',
-    role: 'Editorial Management Board',
-    credentials: 'MCPN',
-    qualifications: 'Computer Science',
-    photo: null,
-    research: ['Machine learning and intelligent systems'],
   },
 ];
 

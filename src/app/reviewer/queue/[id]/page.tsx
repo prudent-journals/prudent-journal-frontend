@@ -123,7 +123,9 @@ export default function ReviewPaperPage() {
 
       <section className="card p-6 mb-6">
         <h2 className="font-sans text-xs font-semibold uppercase tracking-widest text-navy-400 mb-3">Abstract</h2>
-        <p className="font-sans text-navy-700 leading-relaxed">{paper.abstract}</p>
+        <p className="font-sans text-navy-700 leading-relaxed">
+          {paper.abstract || <span className="italic text-navy-400">No abstract was provided.</span>}
+        </p>
         {paper.keywords && (
           <div className="mt-4 pt-4 border-t border-parchment-200">
             <p className="font-sans text-xs text-navy-400 mb-2">Keywords</p>

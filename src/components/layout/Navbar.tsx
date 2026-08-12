@@ -11,6 +11,7 @@ import { cn, getInitials } from '@/lib/utils';
 const navLinks = [
   { href: '/publications', label: 'Publications' },
   { href: '/conferences', label: 'Conferences' },
+  { href: '/proceedings', label: 'Proceedings' },
   { href: '/submit', label: 'Submit Paper' },
   { href: '/about', label: 'About' },
 ];

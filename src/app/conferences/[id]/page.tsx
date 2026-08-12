@@ -186,7 +186,7 @@ export default function ConferenceDetailPage() {
                     <div>
                       <label htmlFor="reg-title" className="block font-sans text-sm font-medium text-navy-800 mb-1.5">Title</label>
                       <select id="reg-title" value={form.title} onChange={set('title')} className="input-base">
-                        <option value="">—</option>
+                        <option value="">None</option>
                         {PERSON_TITLES.map((t) => <option key={t} value={t}>{t}</option>)}
                       </select>
                     </div>

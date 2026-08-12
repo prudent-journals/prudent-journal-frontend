@@ -1,12 +1,126 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { Camera, Loader2, Save } from 'lucide-react';
+import { Camera, Loader2, Save, PenTool, Trash2, Clock, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
-import { usersApi, authApi } from '@/lib/api';
+import { usersApi, authApi, certificatesApi } from '@/lib/api';
 import { getInitials, getErrorMessage } from '@/lib/utils';
+import { CertificateSignatory } from '@/types';
 import toast from 'react-hot-toast';
+
+function SignatureCard() {
+  const [rows, setRows] = useState<CertificateSignatory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [name, setName] = useState('');
+  const [title, setTitle] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const load = useCallback(() => {
+    certificatesApi.mySignatories()
+      .then(r => setRows(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim() || !file) { toast.error('Provide your name and a signature image'); return; }
+    setSubmitting(true);
+    try {
+      await certificatesApi.createMySignatory(name.trim(), title.trim(), file);
+      toast.success('Signature submitted for admin review');
+      setName(''); setTitle(''); setFile(null);
+      load();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setSubmitting(false); }
+  };
+
+  const onDelete = async (id: number) => {
+    try {
+      await certificatesApi.deleteMySignatory(id);
+      setRows(rows.filter(r => r.id !== id));
+    } catch (err) { toast.error(getErrorMessage(err)); }
+  };
+
+  return (
+    <div className="card p-6 space-y-4 mb-6">
+      <div>
+        <h2 className="font-serif text-lg text-navy-900 flex items-center gap-2">
+          <PenTool className="w-4 h-4 text-gold-600" /> Certificate Signature
+        </h2>
+        <p className="text-sm text-navy-500 mt-1">
+          Upload your signature so an administrator can use it on certificates you sign.
+          It only appears on a certificate once approved and switched on from the admin
+          certificates setup page.
+        </p>
+      </div>
+
+      {!loading && rows.length > 0 && (
+        <ul className="space-y-2">
+          {rows.map(row => (
+            <li key={row.id} className="flex items-center gap-3 p-3 rounded-lg bg-parchment-50 border border-parchment-200">
+              {row.signature_url ? (
+                <img src={row.signature_url} alt={row.name} className="h-10 object-contain" />
+              ) : null}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-navy-900 truncate">{row.name}</p>
+                {row.title && <p className="text-xs text-navy-500 truncate">{row.title}</p>}
+              </div>
+              {row.is_active ? (
+                <span className="badge bg-green-100 text-green-700 inline-flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Active
+                </span>
+              ) : (
+                <span className="badge bg-amber-100 text-amber-700 inline-flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Pending review
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => onDelete(row.id)}
+                aria-label={`Remove signature for ${row.name}`}
+                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form onSubmit={onSubmit} className="grid sm:grid-cols-2 gap-3 pt-2 border-t border-parchment-200">
+        <div>
+          <label className="block text-sm font-medium text-navy-700 mb-1.5">Name as it should appear</label>
+          <input value={name} onChange={e => setName(e.target.value)} className="input-base" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-navy-700 mb-1.5">Title</label>
+          <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Chief Editor" className="input-base" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-navy-700 mb-1.5">Signature image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => setFile(e.target.files?.[0] || null)}
+            className="input-base"
+          />
+          <p className="text-xs text-navy-400 mt-1">A scan or photo on a white background works best; the white is made transparent automatically.</p>
+        </div>
+        <div className="sm:col-span-2">
+          <button type="submit" disabled={submitting} className="btn-outline">
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <PenTool className="w-4 h-4" />}
+            Submit Signature
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -106,6 +220,8 @@ export default function ProfilePage() {
           Save Changes
         </button>
       </form>
+
+      {(user.role === 'chief_editor' || user.role === 'reviewer') && <SignatureCard />}
 
       {/* Change password */}
       <form onSubmit={handlePw(onChangePassword)} className="card p-6 space-y-4">

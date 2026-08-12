@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Users, Upload, FileText, MapPin, Calendar } from 'lucide-react';
-import { conferencesApi } from '@/lib/api';
-import { Conference, Registration, REGISTRANT_CATEGORIES } from '@/types';
+import { ArrowLeft, Users, Upload, FileText, MapPin, Calendar, Eye, EyeOff, Trash2, ExternalLink, BookOpen } from 'lucide-react';
+import { conferencesApi, proceedingsApi } from '@/lib/api';
+import { Conference, Registration, ConferenceProceedings, REGISTRANT_CATEGORIES } from '@/types';
 import { formatDate, getErrorMessage } from '@/lib/utils';
 
 const CATEGORY_LABEL = Object.fromEntries(
@@ -25,15 +25,25 @@ export default function ConferenceRegistrationsPage() {
 
   const [conference, setConference] = useState<Conference | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [proceedings, setProceedings] = useState<ConferenceProceedings[]>([]);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
+  const [bookTitle, setBookTitle] = useState('');
+  const [bookFile, setBookFile] = useState<File | null>(null);
+  const [bookUploading, setBookUploading] = useState(false);
+
   const load = () =>
-    Promise.allSettled([conferencesApi.get(id), conferencesApi.registrations(id)])
-      .then(([c, r]) => {
+    Promise.allSettled([
+      conferencesApi.get(id),
+      conferencesApi.registrations(id),
+      proceedingsApi.adminAll(id),
+    ])
+      .then(([c, r, p]) => {
         if (c.status === 'fulfilled') setConference(c.value.data);
         if (r.status === 'fulfilled') setRegistrations(r.value.data);
+        if (p.status === 'fulfilled') setProceedings(p.value.data);
       })
       .finally(() => setLoading(false));
 
@@ -71,6 +81,41 @@ export default function ConferenceRegistrationsPage() {
     }
   };
 
+  const createBook = async () => {
+    if (!bookTitle.trim() || !bookFile) { toast.error('Give the book a title and choose a file'); return; }
+    setBookUploading(true);
+    try {
+      await proceedingsApi.create(bookTitle.trim(), id, bookFile);
+      toast.success('Book of proceedings published');
+      setBookTitle(''); setBookFile(null);
+      load();
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setBookUploading(false);
+    }
+  };
+
+  const toggleBookVisibility = async (book: ConferenceProceedings) => {
+    setProceedings((rows) => rows.map((r) => (r.id === book.id ? { ...r, is_live: !r.is_live } : r)));
+    try {
+      await proceedingsApi.setVisibility(book.id, !book.is_live);
+    } catch (err) {
+      setProceedings((rows) => rows.map((r) => (r.id === book.id ? { ...r, is_live: book.is_live } : r)));
+      toast.error(getErrorMessage(err));
+    }
+  };
+
+  const deleteBook = async (book: ConferenceProceedings) => {
+    try {
+      await proceedingsApi.remove(book.id);
+      setProceedings((rows) => rows.filter((r) => r.id !== book.id));
+      toast.success('Removed');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    }
+  };
+
   if (loading) return <div className="p-10 text-navy-400 font-sans text-sm">Loading</div>;
 
   if (!conference) {
@@ -98,7 +143,79 @@ export default function ConferenceRegistrationsPage() {
       </header>
 
       <section className="card p-6 mb-6">
-        <h2 className="font-serif text-lg text-navy-900 mb-4">Proceedings</h2>
+        <h2 className="font-serif text-lg text-navy-900 mb-1 flex items-center gap-2">
+          <BookOpen className="w-4 h-4 text-gold-600" /> Book of Proceedings
+        </h2>
+        <p className="font-sans text-sm text-navy-500 mb-4">
+          Give it a title and attach the PDF or Word file. It gets its own public page at
+          <span className="font-mono text-navy-600"> /proceedings/&lt;slug&gt;</span> as soon as it's uploaded,
+          with the reader and page downloads available for PDFs.
+        </p>
+
+        {proceedings.length > 0 && (
+          <ul className="space-y-2 mb-4">
+            {proceedings.map((book) => (
+              <li key={book.id} className="flex flex-wrap items-center gap-3 p-3 rounded-xl bg-parchment-100 border border-parchment-300">
+                <FileText className="w-4 h-4 text-navy-700 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-sans text-sm text-navy-800 truncate">{book.title}</p>
+                  <p className="font-sans text-xs text-navy-400">
+                    {book.file_type.toUpperCase()} · {book.view_count} views · {book.download_count} downloads
+                  </p>
+                </div>
+                <a href={`/proceedings/${book.slug}`} target="_blank" rel="noopener noreferrer"
+                   className="p-2 rounded-lg text-navy-500 hover:bg-parchment-200 transition-colors" aria-label="View public page">
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+                <button
+                  onClick={() => toggleBookVisibility(book)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-sans transition-colors ${
+                    book.is_live ? 'bg-green-50 text-green-700' : 'bg-parchment-200 text-navy-400'
+                  }`}
+                >
+                  {book.is_live ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                  {book.is_live ? 'Live' : 'Hidden'}
+                </button>
+                <button onClick={() => deleteBook(book)} aria-label="Remove"
+                  className="p-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="grid sm:grid-cols-[1fr_auto_auto] gap-3 items-end">
+          <div>
+            <label className="block font-sans text-xs text-navy-500 mb-1">Title</label>
+            <input
+              value={bookTitle}
+              onChange={(e) => setBookTitle(e.target.value)}
+              placeholder="e.g. Proceedings of the 6th National Conference"
+              className="input-base"
+            />
+          </div>
+          <div>
+            <label className="block font-sans text-xs text-navy-500 mb-1">File</label>
+            <input
+              type="file"
+              accept="application/pdf,.doc,.docx"
+              onChange={(e) => setBookFile(e.target.files?.[0] || null)}
+              className="font-sans text-sm text-navy-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-navy-900 file:text-parchment-50 file:text-xs"
+            />
+          </div>
+          <button onClick={createBook} disabled={bookUploading} className="btn-primary py-2 disabled:opacity-50">
+            <Upload className="w-4 h-4" /> {bookUploading ? 'Publishing' : 'Publish'}
+          </button>
+        </div>
+      </section>
+
+      <section className="card p-6 mb-6">
+        <h2 className="font-serif text-lg text-navy-900 mb-1">Quick Proceedings Link</h2>
+        <p className="font-sans text-sm text-navy-500 mb-4">
+          A single untitled PDF, used before the Book of Proceedings above existed. Prefer the
+          section above for anything new - it has a title and its own public page.
+        </p>
         {conference.proceedings_url ? (
           <a href={conference.proceedings_url} target="_blank" rel="noopener noreferrer"
              className="inline-flex items-center gap-3 p-4 rounded-xl bg-parchment-100 border border-parchment-300 hover:border-gold-400 transition-colors">

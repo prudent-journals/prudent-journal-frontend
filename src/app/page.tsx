@@ -213,6 +213,31 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Mission */}
+      <section className="py-16 px-6 bg-parchment-100">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-gold-600 text-sm font-sans font-semibold uppercase tracking-widest mb-3">Our Mission</p>
+          <div className="space-y-5 font-sans text-navy-700 leading-relaxed text-base lg:text-lg">
+            <p>
+              Prudent Journals is poised to promote the publication of high quality original
+              research, reviews, short communications and technical reports in the fields of
+              Applied Sciences, Engineering, Environmental Sciences, Management Sciences,
+              Social Sciences and related fields.
+            </p>
+            <p>
+              The Prudent Journals serves as a platform for academics, professionals and industry
+              experts to share innovative and creative findings geared towards knowledge
+              advancement.
+            </p>
+            <p>
+              The Journals publishes double blind peer reviewed articles biannually and aims to
+              enhance global visibility and accessibility through open access publishing in
+              compliance with relevant global standards.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Recent Publications */}
       <section className="py-20 px-6 bg-white">
         <div className="max-w-7xl mx-auto">
@@ -328,7 +353,7 @@ export default async function HomePage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: UploadCloud, step: '01', title: 'Submit', desc: 'Upload your manuscript with an abstract, keywords and co-author details.' },
+              { icon: UploadCloud, step: '01', title: 'Submit', desc: 'Upload your manuscript with keywords and co-author details.' },
               { icon: SearchCheck, step: '02', title: 'Peer Review', desc: 'An editor assigns a qualified reviewer who assesses the work against published criteria.' },
               { icon: PenLine, step: '03', title: 'Revise', desc: 'Reviewer feedback is shared with you, and revisions are submitted through the same record.' },
               { icon: BadgeCheck, step: '04', title: 'Publish', desc: 'On acceptance an editor publishes the final version, indexed and openly accessible.' },

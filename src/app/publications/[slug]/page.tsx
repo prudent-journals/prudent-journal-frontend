@@ -24,14 +24,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const pub = await getPublication(slug);
   if (!pub) return { title: 'Publication Not Found' };
+  const fallbackDescription = `${pub.title} by ${pub.authors}, published in Prudent Journals.`;
+  const description = (pub.abstract || fallbackDescription).slice(0, 160);
   return {
     title: pub.title,
-    description: pub.abstract.slice(0, 160),
+    description,
     keywords: pub.keywords?.split(',').map(k => k.trim()),
     authors: pub.authors.split(',').map(a => ({ name: a.trim() })),
     openGraph: {
       title: pub.title,
-      description: pub.abstract.slice(0, 200),
+      description: (pub.abstract || fallbackDescription).slice(0, 200),
       type: 'article',
       publishedTime: pub.published_at,
       authors: pub.authors.split(','),
@@ -63,7 +65,7 @@ export default async function PublicationDetailPage({ params }: { params: Promis
         '@context': 'https://schema.org',
         '@type': 'ScholarlyArticle',
         headline: pub.title,
-        abstract: pub.abstract,
+        ...(pub.abstract ? { abstract: pub.abstract } : {}),
         author: authors.map(a => ({ '@type': 'Person', name: a })),
         datePublished: pub.published_at,
         publisher: { '@type': 'Organization', name: 'Prudent Journals - Prudent Journals' },
@@ -134,13 +136,15 @@ export default async function PublicationDetailPage({ params }: { params: Promis
             {/* Main content */}
             <div className="lg:col-span-2 space-y-8">
               {/* Abstract */}
-              <section>
-                <h2 className="font-serif text-xl text-navy-900 mb-4 flex items-center gap-2">
-                  <span className="w-1 h-6 bg-gold-500 rounded-full inline-block" />
-                  Abstract
-                </h2>
-                <p className="text-navy-700 font-sans leading-relaxed text-base">{pub.abstract}</p>
-              </section>
+              {pub.abstract && (
+                <section>
+                  <h2 className="font-serif text-xl text-navy-900 mb-4 flex items-center gap-2">
+                    <span className="w-1 h-6 bg-gold-500 rounded-full inline-block" />
+                    Abstract
+                  </h2>
+                  <p className="text-navy-700 font-sans leading-relaxed text-base">{pub.abstract}</p>
+                </section>
+              )}
 
               {/* Keywords */}
               {keywords.length > 0 && (

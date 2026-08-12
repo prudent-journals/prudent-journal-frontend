@@ -315,6 +315,12 @@ function SignatoryRow({ signatory, onChanged }: {
 
         {/* Fields */}
         <div className="flex-1 min-w-0 space-y-3">
+          {signatory.submitted_by_name && (
+            <p className="font-sans text-[11px] text-gold-700 bg-gold-50 border border-gold-200 rounded-lg px-2.5 py-1 inline-block">
+              Self-uploaded by {signatory.submitted_by_name}
+              {!signatory.is_active && ', review and activate to use it'}
+            </p>
+          )}
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
               <label className="block font-sans text-[11px] text-navy-500 mb-1">Name</label>

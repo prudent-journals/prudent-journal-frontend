@@ -137,6 +137,33 @@ export const certificatesApi = {
     return api.post(`/certificates/signatories/${id}/signature`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
   deleteSignatory: (id: number) => api.delete(`/certificates/signatories/${id}`),
+
+  // Self-service: a chief editor or reviewer uploads their own signature.
+  mySignatories: () => api.get('/certificates/signatories/mine'),
+  createMySignatory: (name: string, title: string, file: File) => {
+    const fd = new FormData();
+    fd.append('name', name);
+    if (title) fd.append('title', title);
+    fd.append('file', file);
+    return api.post('/certificates/signatories/mine', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  deleteMySignatory: (id: number) => api.delete(`/certificates/signatories/mine/${id}`),
+};
+
+export const proceedingsApi = {
+  list: (conferenceId?: number) => api.get('/proceedings', { params: { conference_id: conferenceId } }),
+  get: (slug: string) => api.get(`/proceedings/${slug}`),
+  recordDownload: (slug: string) => api.post(`/proceedings/${slug}/download`),
+  adminAll: (conferenceId?: number) => api.get('/proceedings/admin/all', { params: { conference_id: conferenceId } }),
+  create: (title: string, conferenceId: number, file: File) => {
+    const fd = new FormData();
+    fd.append('title', title);
+    fd.append('conference_id', String(conferenceId));
+    fd.append('file', file);
+    return api.post('/proceedings', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  setVisibility: (id: number, isLive: boolean) => api.patch(`/proceedings/${id}/visibility`, { is_live: isLive }),
+  remove: (id: number) => api.delete(`/proceedings/${id}`),
 };
 
 export const usersApi = {

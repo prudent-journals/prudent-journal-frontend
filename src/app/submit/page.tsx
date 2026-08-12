@@ -20,7 +20,6 @@ import toast from 'react-hot-toast';
 
 const schema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters'),
-  abstract: z.string().min(100, 'Abstract must be at least 100 characters'),
   keywords: z.string().optional(),
   authors_str: z.string().optional(),
   paper_type: z.enum(['journal', 'conference']),
@@ -205,19 +204,6 @@ export default function SubmitPage() {
                 <label className="block text-sm font-medium text-navy-700 mb-1.5">Title *</label>
                 <input {...register('title')} placeholder="Full paper title as it should appear in publication" className="input-base" />
                 {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-navy-700 mb-1.5">
-                  Abstract * <span className="text-navy-400 font-normal">(min. 100 characters)</span>
-                </label>
-                <textarea
-                  {...register('abstract')}
-                  rows={6}
-                  placeholder="A concise summary of your research, methodology, findings, and conclusions..."
-                  className="input-base resize-none"
-                />
-                {errors.abstract && <p className="text-red-500 text-xs mt-1">{errors.abstract.message}</p>}
               </div>
 
               <div>

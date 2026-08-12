@@ -12,9 +12,9 @@
  */
 
 // Bumped whenever a release changes the shell or the shape of what is cached.
-// v2: three role model, guest conference registration, Word manuscripts. The
-// cached shell from v1 predates all of it and has to be discarded.
-const VERSION = 'v2';
+// v3: /chief-editor was missing from PRIVATE_PATHS, so its pages were being
+// cached like a public route and could serve a stale submissions list.
+const VERSION = 'v3';
 const SHELL_CACHE = `pj-shell-${VERSION}`;
 const DATA_CACHE = `pj-data-${VERSION}`;
 const DOC_CACHE = `pj-docs-${VERSION}`;
@@ -23,7 +23,7 @@ const KNOWN_CACHES = [SHELL_CACHE, DATA_CACHE, DOC_CACHE];
 const SHELL_ASSETS = ['/', '/publications', '/conferences', '/offline', '/icons/icon-192.png'];
 
 // Never cached: anything private, or anything that changes state.
-const PRIVATE_PATHS = ['/admin', '/dashboard', '/reviewer', '/auth'];
+const PRIVATE_PATHS = ['/admin', '/dashboard', '/reviewer', '/auth', '/chief-editor'];
 const CACHEABLE_API = ['/publications', '/conferences'];
 
 const MAX_DOCS = 12;

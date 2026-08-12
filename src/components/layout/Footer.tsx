@@ -15,6 +15,7 @@ const PUBLICATION_LINKS = [
   { href: '/publications', label: 'Browse All' },
   { href: '/publications?type=journal', label: 'Journal Articles' },
   { href: '/publications?type=conference', label: 'Conference Papers' },
+  { href: '/proceedings', label: 'Book of Proceedings' },
 ];
 
 const AUTHOR_LINKS = [
