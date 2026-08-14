@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Link from 'next/link';
 import { Upload, FileText, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { papersApi, conferencesApi } from '@/lib/api';
@@ -25,6 +24,8 @@ const schema = z.object({
   paper_type: z.enum(['journal', 'conference']),
   conference_id: z.string().optional(),
   cover_letter: z.string().optional(),
+  guest_name: z.string().optional(),
+  guest_email: z.string().optional(),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -61,6 +62,10 @@ export default function SubmitPage() {
 
   const onSubmit = async (data: FormData) => {
     if (!file) { toast.error('Please upload your paper as a Word document'); return; }
+    if (!user && (!data.guest_name?.trim() || !data.guest_email?.trim())) {
+      toast.error('Give your name and email to submit without an account');
+      return;
+    }
 
     const fd = new FormData();
     Object.entries(data).forEach(([k, v]) => { if (v) fd.append(k, v as string); });
@@ -73,36 +78,6 @@ export default function SubmitPage() {
       toast.error(getErrorMessage(err));
     }
   };
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 flex items-center justify-center px-6 py-20 bg-parchment-50">
-          <div className="w-full max-w-md text-center">
-            <div className="w-14 h-14 rounded-2xl bg-navy-900 flex items-center justify-center mx-auto mb-6">
-              <Upload className="w-7 h-7 text-gold-400" />
-            </div>
-            <h1 className="font-serif text-2xl text-navy-900 mb-3">Sign in to submit a paper</h1>
-            <p className="font-sans text-navy-600 leading-relaxed mb-8">
-              Submissions are tied to your account so you can track progress and respond
-              to reviewer feedback. Creating an account is free.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Link href="/auth/login" className="btn-primary flex-1 justify-center py-3">
-                Sign in
-              </Link>
-              <Link href="/auth/register" className="btn-outline flex-1 justify-center py-3">
-                Create an account
-              </Link>
-            </div>
-          </div>
-        </main>
-        <Footer />
-        <MobileNav />
-      </div>
-    );
-  }
 
   if (submitted) {
     return (
@@ -118,11 +93,13 @@ export default function SubmitPage() {
               Your paper has been submitted successfully. You will receive a confirmation email shortly.
             </p>
             <p className="text-navy-400 font-sans text-sm mb-8">
-              Our editorial team will review your submission and assign a reviewer. Track your status in the dashboard.
+              {user
+                ? 'Our editorial team will review your submission and assign a reviewer. Track your status in the dashboard.'
+                : "Our editorial team will review your submission and assign a reviewer. You submitted without an account, so to track status later, use \"Forgot password\" on the sign in page with the email you just gave to set up access."}
             </p>
             <div className="flex gap-3 justify-center">
-              <a href="/dashboard/papers" className="btn-primary">Track Submission</a>
-              <a href="/submit" onClick={() => setSubmitted(false)} className="btn-outline">Submit Another</a>
+              {user && <a href="/dashboard/papers" className="btn-primary">Track Submission</a>}
+              <a href="/submit" onClick={() => setSubmitted(false)} className={user ? 'btn-outline' : 'btn-primary'}>Submit Another</a>
             </div>
           </div>
         </div>
@@ -158,6 +135,29 @@ export default function SubmitPage() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {!user && (
+              <div className="card p-6 space-y-5">
+                <div>
+                  <h2 className="font-serif text-lg text-navy-900">Your Details</h2>
+                  <p className="text-sm text-navy-500 mt-1">
+                    Submitting without an account is fine - we just need somewhere to send updates.
+                    <a href="/auth/register" className="text-gold-700 underline ml-1">Creating an account</a> instead
+                    gives you a dashboard to track everything from.
+                  </p>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-navy-700 mb-1.5">Full Name *</label>
+                    <input {...register('guest_name')} placeholder="Your full name" className="input-base" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-navy-700 mb-1.5">Email *</label>
+                    <input {...register('guest_email')} type="email" placeholder="you@example.com" className="input-base" />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Paper Type */}
             <div className="card p-6">
               <h2 className="font-serif text-lg text-navy-900 mb-4">Submission Type</h2>

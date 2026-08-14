@@ -97,6 +97,13 @@ export default function NotificationBell() {
     load();
   };
 
+  // Attending to one notification - opening it - resolves just that one,
+  // rather than leaving it sitting there unread until a separate bulk action.
+  const markRead = (id: number) => {
+    setNotifications((list) => list.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
+    usersApi.markRead(id).catch(() => {});
+  };
+
   return (
     <>
       <button
@@ -151,10 +158,11 @@ export default function NotificationBell() {
                   </div>
                 </div>
               );
+              const onOpen = () => { if (!n.is_read) markRead(n.id); setOpen(false); };
               return n.link ? (
-                <Link key={n.id} href={n.link} onClick={() => setOpen(false)}>{row}</Link>
+                <Link key={n.id} href={n.link} onClick={onOpen}>{row}</Link>
               ) : (
-                <div key={n.id}>{row}</div>
+                <button key={n.id} type="button" onClick={onOpen} className="w-full text-left">{row}</button>
               );
             })}
           </div>

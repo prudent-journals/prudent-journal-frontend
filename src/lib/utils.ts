@@ -77,6 +77,14 @@ export function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** Opens a manuscript/document link in the in-app preview instead of
+ * triggering an immediate download - a Word file has no browser-native
+ * inline viewer, so a plain link to it just downloads instead of showing
+ * anything on screen. */
+export function previewUrl(fileUrl: string, title: string): string {
+  return `/preview?url=${encodeURIComponent(fileUrl)}&title=${encodeURIComponent(title)}`;
+}
+
 export function getErrorMessage(error: unknown): string {
   if (error && typeof error === 'object' && 'response' in error) {
     const axiosError = error as { response?: { data?: { detail?: string } } };

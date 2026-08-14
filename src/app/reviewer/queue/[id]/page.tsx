@@ -10,7 +10,7 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, FileText, CheckCircle2, Send, Upload, Loader2 } from 'lucide-react';
 import { papersApi } from '@/lib/api';
 import { Paper, Review } from '@/types';
-import { formatDate, getStatusLabel, getStatusColor, getErrorMessage } from '@/lib/utils';
+import { formatDate, getStatusLabel, getStatusColor, getErrorMessage, previewUrl } from '@/lib/utils';
 import { MANUSCRIPT_ACCEPT_ATTR } from '@/lib/uploads';
 
 const schema = z.object({
@@ -139,7 +139,7 @@ export default function ReviewPaperPage() {
       </section>
 
       {fileUrl && (
-        <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+        <a href={previewUrl(fileUrl, paper.title)} target="_blank" rel="noopener noreferrer"
            className="card p-5 flex items-center gap-4 mb-4 group hover:border-gold-400 transition-colors">
           <div className="w-11 h-11 rounded-xl bg-navy-900 flex items-center justify-center flex-shrink-0">
             <FileText className="w-5 h-5 text-gold-400" />

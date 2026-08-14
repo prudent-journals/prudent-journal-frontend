@@ -175,6 +175,7 @@ export const usersApi = {
   },
   notifications: (unreadOnly?: boolean) => api.get('/users/me/notifications', { params: { unread_only: unreadOnly } }),
   markAllRead: () => api.post('/users/me/notifications/read-all'),
+  markRead: (id: number) => api.post(`/users/me/notifications/${id}/read`),
   // Admin user management. Listing is paginated and filtered server side.
   adminList: (params?: {
     role?: string; search?: string; is_active?: boolean; page?: number; size?: number;

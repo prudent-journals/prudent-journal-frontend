@@ -7,7 +7,7 @@ import { ArrowLeft, FileText, Eye, Upload, MessageSquare, CheckCircle, Clock, Lo
 import { useDropzone } from 'react-dropzone';
 import { papersApi } from '@/lib/api';
 import { Paper, Review } from '@/types';
-import { getStatusColor, getStatusLabel, formatDate, getErrorMessage, cn } from '@/lib/utils';
+import { getStatusColor, getStatusLabel, formatDate, getErrorMessage, cn, previewUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { MANUSCRIPT_ACCEPT, MAX_DOCUMENT_SIZE } from '@/lib/uploads';
 
@@ -197,21 +197,21 @@ export default function DashboardPaperDetailPage() {
           <div className="card p-5 space-y-3">
             <h3 className="font-sans text-sm font-semibold text-navy-500 uppercase tracking-wider">Files</h3>
             {paper.submission_file_url && (
-              <a href={paper.submission_file_url} target="_blank" rel="noopener"
+              <a href={previewUrl(paper.submission_file_url, paper.title)} target="_blank" rel="noopener"
                 className="flex items-center gap-2 p-2.5 rounded-lg border border-parchment-200 hover:bg-parchment-50 text-sm text-navy-700 transition-colors">
                 <FileText className="w-4 h-4 text-navy-500" /> Original Submission
                 <Eye className="w-3.5 h-3.5 ml-auto text-navy-400" />
               </a>
             )}
             {paper.revised_file_url && (
-              <a href={paper.revised_file_url} target="_blank" rel="noopener"
+              <a href={previewUrl(paper.revised_file_url, paper.title)} target="_blank" rel="noopener"
                 className="flex items-center gap-2 p-2.5 rounded-lg border border-green-200 bg-green-50 hover:bg-green-100 text-sm text-green-700 transition-colors">
                 <FileText className="w-4 h-4" /> Revised Version
                 <Eye className="w-3.5 h-3.5 ml-auto" />
               </a>
             )}
             {paper.final_pdf_url && (
-              <a href={paper.final_pdf_url} target="_blank" rel="noopener"
+              <a href={previewUrl(paper.final_pdf_url, paper.title)} target="_blank" rel="noopener"
                 className="flex items-center gap-2 p-2.5 rounded-lg border border-gold-200 bg-gold-50 hover:bg-gold-100 text-sm text-gold-700 transition-colors">
                 <FileText className="w-4 h-4" /> Published PDF
                 <Eye className="w-3.5 h-3.5 ml-auto" />

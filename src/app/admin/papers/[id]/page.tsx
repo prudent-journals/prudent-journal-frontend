@@ -7,7 +7,7 @@ import { ArrowLeft, FileText, Upload, Eye, CheckCircle, XCircle, RefreshCw, Shar
 import { useDropzone } from 'react-dropzone';
 import { papersApi, usersApi } from '@/lib/api';
 import { Paper, Review, User } from '@/types';
-import { getStatusColor, getStatusLabel, formatDate, getErrorMessage } from '@/lib/utils';
+import { getStatusColor, getStatusLabel, formatDate, getErrorMessage, previewUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { MANUSCRIPT_ACCEPT_ATTR, PDF_ACCEPT, MAX_DOCUMENT_SIZE } from '@/lib/uploads';
 
@@ -152,7 +152,7 @@ export default function AdminPaperDetailPage() {
             <h2 className="font-serif text-lg text-navy-900 mb-4">Manuscript Files</h2>
             <div className="space-y-3">
               {paper.submission_file_url && (
-                <a href={paper.submission_file_url} target="_blank" rel="noopener"
+                <a href={previewUrl(paper.submission_file_url, paper.title)} target="_blank" rel="noopener"
                   className="flex items-center gap-3 p-3 rounded-xl border border-parchment-200 hover:bg-parchment-50 transition-colors">
                   <FileText className="w-5 h-5 text-navy-600" />
                   <span className="text-sm text-navy-700">Original Submission</span>
@@ -160,7 +160,7 @@ export default function AdminPaperDetailPage() {
                 </a>
               )}
               {paper.revised_file_url && (
-                <a href={paper.revised_file_url} target="_blank" rel="noopener"
+                <a href={previewUrl(paper.revised_file_url, paper.title)} target="_blank" rel="noopener"
                   className="flex items-center gap-3 p-3 rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 transition-colors">
                   <FileText className="w-5 h-5 text-green-600" />
                   <span className="text-sm text-green-700">Final Version (current)</span>
