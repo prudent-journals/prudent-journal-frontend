@@ -28,9 +28,9 @@ export type RegistrantCategory =
   | 'student_postgraduate';
 
 export const REGISTRANT_CATEGORIES: { value: RegistrantCategory; label: string; hint: string }[] = [
-  { value: 'asup_internal', label: 'ASUP member (internal)', hint: 'Staff of the host polytechnic' },
-  { value: 'asup_external', label: 'ASUP member (external)', hint: 'Staff of any other polytechnic' },
-  { value: 'asuu', label: 'ASUU member', hint: 'University academic staff' },
+  { value: 'asup_internal', label: 'Staff (host institution)', hint: 'Staff of the host polytechnic' },
+  { value: 'asup_external', label: 'Staff (other institution)', hint: 'Staff of any other polytechnic' },
+  { value: 'asuu', label: 'University academic staff', hint: 'Academic staff of a university, not a polytechnic' },
   { value: 'corporate', label: 'Corporate organisation', hint: 'Attending on behalf of a company' },
   { value: 'private', label: 'Private participant', hint: 'Attending in a personal capacity' },
   { value: 'student_undergraduate', label: 'Student (undergraduate)', hint: 'With a valid student ID' },
