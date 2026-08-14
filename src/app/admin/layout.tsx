@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, FileText, Users, Calendar, BookOpen,
+  LayoutDashboard, FileText, Users, Calendar, BookOpen, Library,
   Settings, LogOut, ChevronRight, Star, Award, Activity, Menu, X
 } from 'lucide-react';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
@@ -20,6 +20,7 @@ const NAV = [
   { href: '/admin/reviews', label: 'Review Queue', icon: Star },
   { href: '/admin/publications', label: 'Publications', icon: BookOpen },
   { href: '/admin/conferences', label: 'Conferences', icon: Calendar },
+  { href: '/admin/proceedings', label: 'Proceedings', icon: Library },
   { href: '/admin/certificates', label: 'Certificates', icon: Award },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/system', label: 'System', icon: Activity },
