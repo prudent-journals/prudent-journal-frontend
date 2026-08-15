@@ -18,7 +18,7 @@ const navLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const { user, logout, hasHydrated } = useAuthStore();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -74,7 +74,7 @@ export default function Navbar() {
 
         {/* Right actions */}
         <div className="hidden md:flex items-center gap-3">
-          {user ? (
+          {!hasHydrated ? null : user ? (
             <>
               {/* Notifications */}
               <Link href="/dashboard/notifications" className="relative p-2 rounded-lg hover:bg-parchment-100 transition-colors">
@@ -166,7 +166,7 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="border-t border-parchment-200 pt-3 mt-3 flex flex-col gap-2">
-            {user ? (
+            {!hasHydrated ? null : user ? (
               <>
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)} className="btn-outline text-center text-sm">Dashboard</Link>
                 {isAdmin(user) && (

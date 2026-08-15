@@ -31,7 +31,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function SubmitPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, hasHydrated } = useAuthStore();
   const [file, setFile] = useState<File | null>(null);
   const [conferences, setConferences] = useState<Conference[]>([]);
   const [submitted, setSubmitted] = useState(false);
@@ -78,6 +78,14 @@ export default function SubmitPage() {
       toast.error(getErrorMessage(err));
     }
   };
+
+  // The store rehydrates from localStorage after the initial paint, so
+  // rendering off `user` before that finishes would show the signed-out
+  // (guest fields) version first and then flip once it resolves - a visible
+  // flash, and a server/client mismatch on a hard refresh since the server
+  // has no localStorage to read at all. Wait for it, matching the guard
+  // pattern used everywhere else auth state decides what renders.
+  if (!hasHydrated) return null;
 
   if (submitted) {
     return (
