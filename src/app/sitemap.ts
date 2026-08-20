@@ -3,7 +3,7 @@ import { MetadataRoute } from 'next';
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://prudentjournal.com';
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://prudentjournals.com';
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },

@@ -15,19 +15,19 @@ const ROUTES = [
     icon: FileText,
     title: 'Submissions and review',
     desc: 'Questions about a manuscript already under consideration, review timelines, or revisions.',
-    email: 'editorial@prudentjournal.com',
+    email: 'editorial@prudentjournals.com',
   },
   {
     icon: Users,
     title: 'Conferences and registration',
     desc: 'Registration references, attendance, proceedings and certificates.',
-    email: 'conferences@prudentjournal.com',
+    email: 'conferences@prudentjournals.com',
   },
   {
     icon: HelpCircle,
     title: 'General enquiries',
     desc: 'Anything else, including indexing, permissions and corrections.',
-    email: 'info@prudentjournal.com',
+    email: 'info@prudentjournals.com',
   },
 ];
 
@@ -76,8 +76,8 @@ export default function ContactPage() {
                   <Mail className="w-5 h-5 text-navy-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-navy-500">Email</p>
-                    <a href="mailto:editorial@prudentjournal.com" className="text-navy-900 hover:text-gold-700 transition-colors">
-                      editorial@prudentjournal.com
+                    <a href="mailto:editorial@prudentjournals.com" className="text-navy-900 hover:text-gold-700 transition-colors">
+                      editorial@prudentjournals.com
                     </a>
                   </div>
                 </li>
@@ -85,7 +85,7 @@ export default function ContactPage() {
                   <Globe className="w-5 h-5 text-navy-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="text-navy-500">Web</p>
-                    <span className="text-navy-900">prudentjournal.com</span>
+                    <span className="text-navy-900">prudentjournals.com</span>
                   </div>
                 </li>
                 <li className="flex gap-3">

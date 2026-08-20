@@ -110,10 +110,10 @@ export default function Footer({ full = false }: Props) {
                 <MapPin className="w-3 h-3" /> Bori, Rivers State, Nigeria
               </span>
               <span className="flex items-center gap-2">
-                <Mail className="w-3 h-3" /> journal@prudentjournal.com
+                <Mail className="w-3 h-3" /> journal@prudentjournals.com
               </span>
               <span className="flex items-center gap-2">
-                <Globe className="w-3 h-3" /> prudentjournal.com
+                <Globe className="w-3 h-3" /> prudentjournals.com
               </span>
             </div>
           </div>
