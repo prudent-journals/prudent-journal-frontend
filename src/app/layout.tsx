@@ -3,6 +3,7 @@ import { Playfair_Display, DM_Sans, Cormorant_Garamond, JetBrains_Mono } from 'n
 import { Toaster } from 'react-hot-toast';
 import ServiceWorkerRegistrar from '@/components/pwa/ServiceWorkerRegistrar';
 import InstallPrompt from '@/components/pwa/InstallPrompt';
+import IdleLogoutGuard from '@/components/auth/IdleLogoutGuard';
 import './globals.css';
 
 const playfair = Playfair_Display({
@@ -94,6 +95,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <ServiceWorkerRegistrar />
         <InstallPrompt />
+        <IdleLogoutGuard />
         <Toaster
           position="top-right"
           toastOptions={{

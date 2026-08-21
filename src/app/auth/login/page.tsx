@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -25,6 +25,16 @@ export default function LoginPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+
+  // Set by IdleLogoutGuard right before it signs an inactive session out -
+  // sessionStorage survives the redirect that follows, a query param would
+  // work too but this keeps the URL clean.
+  useEffect(() => {
+    if (sessionStorage.getItem('pj_logout_reason') === 'idle') {
+      sessionStorage.removeItem('pj_logout_reason');
+      toast('You were signed out after a period of inactivity.');
+    }
+  }, []);
 
   const onSubmit = async (data: FormData) => {
     try {
