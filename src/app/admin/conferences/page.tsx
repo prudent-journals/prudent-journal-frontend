@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
-import { Calendar, Plus, X, MapPin, Users, ExternalLink } from 'lucide-react';
+import { Calendar, Plus, X, MapPin, Users, ExternalLink, Trash2, Loader2 } from 'lucide-react';
 import { conferencesApi } from '@/lib/api';
 import {
   Conference, ConferenceStatus, RegistrantCategory, REGISTRANT_CATEGORIES,
@@ -43,6 +43,7 @@ export default function AdminConferencesPage() {
   const [conferences, setConferences] = useState<Conference[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [deleting, setDeleting] = useState<number | null>(null);
 
   // Fee per registrant category. A category left blank is not offered on the
   // public registration form at all, which is how an organiser restricts who
@@ -95,6 +96,22 @@ export default function AdminConferencesPage() {
       load();
     } catch (err) {
       toast.error(getErrorMessage(err));
+    }
+  };
+
+  const remove = async (conf: Conference) => {
+    if (!confirm(`Delete "${conf.title}"?\n\nThis permanently removes the conference and cannot be undone. Refused if it already has registrations, proceedings, papers, publications or certificates attached.`)) {
+      return;
+    }
+    setDeleting(conf.id);
+    try {
+      await conferencesApi.remove(conf.id);
+      setConferences((list) => list.filter((c) => c.id !== conf.id));
+      toast.success('Conference deleted');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -283,6 +300,14 @@ export default function AdminConferencesPage() {
                   <Link href={`/conferences/${conf.id}`} target="_blank" className="btn-ghost py-1.5 text-sm justify-center">
                     <ExternalLink className="w-3.5 h-3.5" /> View public page
                   </Link>
+                  <button
+                    onClick={() => remove(conf)}
+                    disabled={deleting === conf.id}
+                    className="py-1.5 text-sm justify-center rounded-xl font-medium inline-flex items-center gap-2 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60"
+                  >
+                    {deleting === conf.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    Delete
+                  </button>
                 </div>
               </div>
             </div>

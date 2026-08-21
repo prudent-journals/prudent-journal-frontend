@@ -37,6 +37,7 @@ export const authApi = {
   forgotPassword: (email: string) => api.post('/auth/forgot-password', { email }),
   resetPassword: (data: { token: string; new_password: string }) => api.post('/auth/reset-password', data),
   changePassword: (data: { current_password: string; new_password: string }) => api.post('/auth/change-password', data),
+  changeEmail: (data: { new_email: string; current_password: string }) => api.post('/auth/change-email', data),
   verifyEmail: (token: string) => api.get(`/auth/verify?token=${token}`),
 };
 
@@ -81,6 +82,7 @@ export const publicationsApi = {
   adminAll: () => api.get('/publications/admin/all'),
   setVisibility: (id: number, isLive: boolean) =>
     api.patch(`/publications/${id}/visibility`, { is_live: isLive }),
+  remove: (id: number) => api.delete(`/publications/${id}`),
 };
 
 // Conferences
@@ -89,6 +91,7 @@ export const conferencesApi = {
   get: (id: number) => api.get(`/conferences/${id}`),
   create: (data: object) => api.post('/conferences', data),
   update: (id: number, data: object) => api.patch(`/conferences/${id}`, data),
+  remove: (id: number) => api.delete(`/conferences/${id}`),
   // Open to anyone. The interceptor attaches a token when there is one, and the
   // backend links the registration to that account; without one it registers a
   // guest against the email address in the form.

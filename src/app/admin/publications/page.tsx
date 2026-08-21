@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, Search, ExternalLink, Eye, EyeOff, Download, FileText, Loader2 } from 'lucide-react';
+import { BookOpen, Search, ExternalLink, Eye, EyeOff, Download, FileText, Trash2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { publicationsApi } from '@/lib/api';
 import { Publication } from '@/types';
@@ -16,6 +16,7 @@ export default function AdminPublicationsPage() {
   const [query, setQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
   const [toggling, setToggling] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState<number | null>(null);
 
   useEffect(() => {
     publicationsApi.adminAll()
@@ -35,6 +36,22 @@ export default function AdminPublicationsPage() {
       toast.error(getErrorMessage(err));
     } finally {
       setToggling(null);
+    }
+  };
+
+  const remove = async (pub: Publication) => {
+    if (!confirm(`Delete "${pub.title}"?\n\nThis permanently removes the publication and cannot be undone. The underlying paper is put back to accepted, so it can be republished later.`)) {
+      return;
+    }
+    setDeleting(pub.id);
+    try {
+      await publicationsApi.remove(pub.id);
+      setPublications((list) => list.filter((p) => p.id !== pub.id));
+      toast.success('Publication deleted');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -172,6 +189,14 @@ export default function AdminPublicationsPage() {
                     <FileText className="w-3.5 h-3.5" /> Open PDF
                   </a>
                 )}
+                <button
+                  onClick={() => remove(pub)}
+                  disabled={deleting === pub.id}
+                  className="py-1.5 text-sm justify-center rounded-xl font-medium inline-flex items-center gap-2 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60"
+                >
+                  {deleting === pub.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  Delete
+                </button>
               </div>
             </div>
           ))}
