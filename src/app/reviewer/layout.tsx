@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   LayoutDashboard, ClipboardList, CheckCircle2, BookOpen,
-  LogOut, ChevronRight, Settings, Menu, X,
+  LogOut, ChevronRight, Settings, Menu, X, User,
 } from 'lucide-react';
 import { useAuthStore, isReviewer } from '@/lib/auth-store';
 import { cn, getInitials, getRoleLabel } from '@/lib/utils';
@@ -99,6 +99,9 @@ export default function ReviewerLayout({ children }: { children: React.ReactNode
       </nav>
 
       <div className="p-3 border-t border-navy-800 space-y-1">
+        <Link href="/dashboard/profile" className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-navy-400 hover:bg-navy-800 transition-colors">
+          <User className="w-4 h-4" /> Profile
+        </Link>
         <Link href="/dashboard" className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-navy-400 hover:bg-navy-800 transition-colors">
           <Settings className="w-4 h-4" /> My Dashboard
         </Link>

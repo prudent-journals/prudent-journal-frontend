@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   LayoutDashboard, FileText, Users, BookOpen,
-  Settings, LogOut, ChevronRight, Menu, X,
+  Settings, LogOut, ChevronRight, Menu, X, User,
 } from 'lucide-react';
 import { useAuthStore, isChiefEditor } from '@/lib/auth-store';
 import { cn, getInitials, getRoleLabel } from '@/lib/utils';
@@ -102,6 +102,9 @@ export default function ChiefEditorLayout({ children }: { children: React.ReactN
       </nav>
 
       <div className="p-3 border-t border-navy-800 space-y-1">
+        <Link href="/dashboard/profile" className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-navy-400 hover:bg-navy-800 transition-colors">
+          <User className="w-4 h-4" /> Profile
+        </Link>
         <Link href="/dashboard" className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-navy-400 hover:bg-navy-800 transition-colors">
           <Settings className="w-4 h-4" /> My Dashboard
         </Link>

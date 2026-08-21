@@ -139,6 +139,10 @@ export default function ProfilePage() {
     current_password: string; new_password: string; confirm: string;
   }>();
 
+  const { register: regEmail, handleSubmit: handleEmail, reset: resetEmail, formState: { isSubmitting: emailSubmitting } } = useForm<{
+    new_email: string; current_password: string;
+  }>();
+
   const onSaveProfile = async (data: object) => {
     try {
       const { data: updated } = await usersApi.updateMe(data);
@@ -153,6 +157,15 @@ export default function ProfilePage() {
       await authApi.changePassword({ current_password: data.current_password, new_password: data.new_password });
       toast.success('Password changed');
       resetPw();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+  };
+
+  const onChangeEmail = async (data: { new_email: string; current_password: string }) => {
+    try {
+      const { data: updated } = await authApi.changeEmail(data);
+      setUser(updated);
+      toast.success('Email updated. Check your new inbox to verify it.');
+      resetEmail();
     } catch (err) { toast.error(getErrorMessage(err)); }
   };
 
@@ -218,6 +231,27 @@ export default function ProfilePage() {
         <button type="submit" disabled={isSubmitting} className="btn-primary">
           {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           Save Changes
+        </button>
+      </form>
+
+      {/* Change email */}
+      <form onSubmit={handleEmail(onChangeEmail)} className="card p-6 space-y-4 mb-6">
+        <h2 className="font-serif text-lg text-navy-900">Change Email</h2>
+        <p className="text-sm text-navy-500 -mt-2">
+          Current: <span className="font-medium text-navy-700">{user.email}</span>. Takes effect
+          immediately - you stay signed in, but you&apos;ll need to verify the new address.
+        </p>
+        <div>
+          <label className="block text-sm font-medium text-navy-700 mb-1.5">New Email</label>
+          <input {...regEmail('new_email')} type="email" className="input-base" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-navy-700 mb-1.5">Current Password</label>
+          <input {...regEmail('current_password')} type="password" className="input-base" />
+        </div>
+        <button type="submit" disabled={emailSubmitting} className="btn-outline">
+          {emailSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+          Update Email
         </button>
       </form>
 
