@@ -10,6 +10,13 @@
 export const MAX_DOCUMENT_SIZE = 100 * 1024 * 1024;
 export const MAX_DOCUMENT_SIZE_LABEL = '100MB';
 
+// A book of proceedings compiles many papers into one file and can reach
+// multiple gigabytes. It's uploaded in small pieces behind the scenes so
+// Cloudinary's own per-file size cap never gets in the way - this is a
+// sanity ceiling, not anything close to a real technical limit.
+export const MAX_PROCEEDINGS_SIZE = 5 * 1024 * 1024 * 1024;
+export const MAX_PROCEEDINGS_SIZE_LABEL = '5GB';
+
 /** Dropzone `accept` map for a manuscript. */
 export const MANUSCRIPT_ACCEPT = {
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],

@@ -8,7 +8,8 @@ import {
 import toast from 'react-hot-toast';
 import { proceedingsApi, conferencesApi } from '@/lib/api';
 import { ConferenceProceedings, Conference } from '@/types';
-import { formatDate, getErrorMessage } from '@/lib/utils';
+import { formatDate, formatFileSize, getErrorMessage } from '@/lib/utils';
+import { MAX_PROCEEDINGS_SIZE, MAX_PROCEEDINGS_SIZE_LABEL } from '@/lib/uploads';
 
 export default function AdminProceedingsPage() {
   const [proceedings, setProceedings] = useState<ConferenceProceedings[]>([]);
@@ -40,6 +41,10 @@ export default function AdminProceedingsPage() {
   const onUpload = async () => {
     if (!title.trim() || !conferenceId || !file) {
       toast.error('Give it a title, a conference, and a file');
+      return;
+    }
+    if (file.size > MAX_PROCEEDINGS_SIZE) {
+      toast.error(`That file is ${formatFileSize(file.size)} - the limit is ${MAX_PROCEEDINGS_SIZE_LABEL}`);
       return;
     }
     setUploading(true);
@@ -140,18 +145,29 @@ export default function AdminProceedingsPage() {
         </div>
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex-1 min-w-[14rem]">
-            <label className="block font-sans text-xs text-navy-500 mb-1.5">File (PDF or Word)</label>
+            <label className="block font-sans text-xs text-navy-500 mb-1.5">
+              File (PDF or Word) &middot; Max {MAX_PROCEEDINGS_SIZE_LABEL}
+            </label>
             <input
               type="file"
               accept="application/pdf,.doc,.docx"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
               className="font-sans text-sm text-navy-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-navy-900 file:text-parchment-50 file:text-sm w-full"
             />
+            {file && (
+              <p className="font-sans text-xs text-navy-400 mt-1.5">{file.name} &middot; {formatFileSize(file.size)}</p>
+            )}
           </div>
           <button onClick={onUpload} disabled={uploading} className="btn-primary py-2 disabled:opacity-60">
             {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
             {uploading ? 'Publishing' : 'Publish'}
           </button>
+          {uploading && (
+            <p className="font-sans text-xs text-navy-500 w-full">
+              Large files are uploaded in pieces behind the scenes and can genuinely take several
+              minutes - this is normal, keep this tab open until it finishes.
+            </p>
+          )}
         </div>
         {conferences.length === 0 && !loading && (
           <p className="font-sans text-xs text-navy-400 mt-3">
