@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Filter, BookOpen, Download, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import { publicationsApi } from '@/lib/api';
-import { Publication } from '@/types';
+import { Search, Filter, BookOpen, Library, FileText, Download, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { publicationsApi, proceedingsApi } from '@/lib/api';
+import { Publication, ConferenceProceedings } from '@/types';
 import { formatDate, truncate, cn } from '@/lib/utils';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -14,6 +14,7 @@ const PAGE_SIZE = 12;
 
 export default function PublicationsPage() {
   const [publications, setPublications] = useState<Publication[]>([]);
+  const [proceedings, setProceedings] = useState<ConferenceProceedings[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -34,14 +35,47 @@ export default function PublicationsPage() {
       if (data.total !== undefined) setTotal(data.total);
     } catch {
       setPublications([]);
-    } finally {
-      setLoading(false);
     }
+
+    // A book of proceedings belongs to a conference the same way a
+    // "conference" publication does, so it belongs in this list too -
+    // fetched (and lightly search-filtered client side, the endpoint has no
+    // search param) only when the Conference filter is actually in play.
+    // The endpoint isn't paginated, so this always fetches every live one.
+    if (typeFilter === '' || typeFilter === 'conference') {
+      try {
+        const { data } = await proceedingsApi.list();
+        const q = search.trim().toLowerCase();
+        const rows: ConferenceProceedings[] = Array.isArray(data) ? data : [];
+        setProceedings(
+          q
+            ? rows.filter((p) =>
+                p.title.toLowerCase().includes(q) || (p.conference_title || '').toLowerCase().includes(q))
+            : rows,
+        );
+      } catch {
+        setProceedings([]);
+      }
+    } else {
+      setProceedings([]);
+    }
+
+    setLoading(false);
   }, [search, typeFilter, page]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+
+  // Merged and sorted so a recent book of proceedings sits alongside recent
+  // publications rather than in its own separate block.
+  const listing: Array<
+    | { kind: 'publication'; date: string; item: Publication }
+    | { kind: 'proceedings'; date: string; item: ConferenceProceedings }
+  > = [
+    ...publications.map((p) => ({ kind: 'publication' as const, date: p.published_at, item: p })),
+    ...proceedings.map((p) => ({ kind: 'proceedings' as const, date: p.created_at, item: p })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -105,7 +139,7 @@ export default function PublicationsPage() {
                 </div>
               ))}
             </div>
-          ) : publications.length === 0 ? (
+          ) : listing.length === 0 ? (
             <div className="text-center py-24">
               <BookOpen className="w-14 h-14 text-navy-300 mx-auto mb-4" />
               <h3 className="font-serif text-xl text-navy-600 mb-2">No publications found</h3>
@@ -114,12 +148,16 @@ export default function PublicationsPage() {
           ) : (
             <>
               <p className="text-sm text-navy-500 font-sans mb-6">
-                {publications.length} result{publications.length !== 1 ? 's' : ''} found
+                {listing.length} result{listing.length !== 1 ? 's' : ''} found
               </p>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 stagger-children">
-                {publications.map((pub, i) => (
-                  <PublicationCard key={pub.id} pub={pub} index={i} />
-                ))}
+                {listing.map((entry, i) =>
+                  entry.kind === 'publication' ? (
+                    <PublicationCard key={`pub-${entry.item.id}`} pub={entry.item} index={i} />
+                  ) : (
+                    <ProceedingsListingCard key={`proc-${entry.item.id}`} proc={entry.item} index={i} />
+                  )
+                )}
               </div>
 
               {/* Pagination */}
@@ -206,6 +244,46 @@ function PublicationCard({ pub, index }: { pub: Publication; index: number }) {
         <div className="flex items-center gap-3 text-navy-400 flex-shrink-0">
           <span className="flex items-center gap-1 text-xs"><Eye className="w-3 h-3" />{pub.view_count}</span>
           <span className="flex items-center gap-1 text-xs"><Download className="w-3 h-3" />{pub.download_count}</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// A book of proceedings has no abstract/authors/keywords the way an
+// article does, so this is its own card rather than forcing it through
+// PublicationCard's shape - same visual language, and links out to the
+// dedicated /proceedings page (unchanged) rather than /publications.
+function ProceedingsListingCard({ proc, index }: { proc: ConferenceProceedings; index: number }) {
+  return (
+    <Link
+      href={`/proceedings/${proc.slug}`}
+      className="group card p-6 flex flex-col gap-3 animate-fade-up min-w-0"
+      style={{ animationDelay: `${index * 60}ms` }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="badge bg-navy-100 text-navy-700 inline-flex items-center gap-1">
+          <Library className="w-3 h-3" /> Book of Proceedings
+        </span>
+        <span className="text-xs text-navy-400 font-mono uppercase">{proc.file_type}</span>
+      </div>
+
+      <h2 className="font-serif text-base text-navy-900 group-hover:text-gold-700 transition-colors leading-snug">
+        {truncate(proc.title, 90)}
+      </h2>
+
+      {proc.conference_title && (
+        <p className="text-navy-500 text-sm font-sans leading-relaxed flex-1 flex items-start gap-1.5">
+          <FileText className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+          {truncate(proc.conference_title, 130)}
+        </p>
+      )}
+
+      <div className="pt-3 border-t border-parchment-200 flex items-center justify-between gap-2 min-w-0">
+        <span className="text-xs text-navy-500 font-sans truncate min-w-0 flex-1">{formatDate(proc.created_at)}</span>
+        <div className="flex items-center gap-3 text-navy-400 flex-shrink-0">
+          <span className="flex items-center gap-1 text-xs"><Eye className="w-3 h-3" />{proc.view_count}</span>
+          <span className="flex items-center gap-1 text-xs"><Download className="w-3 h-3" />{proc.download_count}</span>
         </div>
       </div>
     </Link>
