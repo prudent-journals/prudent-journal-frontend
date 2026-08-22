@@ -66,8 +66,29 @@ export const papersApi = {
   },
   myReviews: () => api.get('/papers/my-reviews'),
   getReviews: (paperId: number) => api.get(`/papers/${paperId}/reviews`),
-  submitReview: (paperId: number, data: object) => api.post(`/papers/${paperId}/reviews`, data),
+  submitReview: (
+    paperId: number,
+    data: {
+      content: string; decision: string;
+      originality_score: number; methodology_score: number; clarity_score: number; relevance_score: number;
+    },
+    file?: File | null,
+    templateId?: number | null,
+  ) => {
+    const fd = new FormData();
+    Object.entries(data).forEach(([k, v]) => fd.append(k, String(v)));
+    if (file) fd.append('file', file);
+    else if (templateId) fd.append('template_id', String(templateId));
+    return api.post(`/papers/${paperId}/reviews`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
   shareReview: (paperId: number, reviewId: number) => api.patch(`/papers/${paperId}/reviews/${reviewId}/share`),
+  requestRevision: (id: number, revisionType: 'minor' | 'major', notes: string, file?: File | null) => {
+    const fd = new FormData();
+    fd.append('revision_type', revisionType);
+    if (notes) fd.append('notes', notes);
+    if (file) fd.append('file', file);
+    return api.post(`/papers/${id}/request-revision`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
   // Chief editor dashboard
   editorReviewers: () => api.get('/papers/editor/reviewers'),
   editorStats: () => api.get('/papers/editor/stats'),
@@ -151,6 +172,19 @@ export const certificatesApi = {
     return api.post('/certificates/signatories/mine', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
   deleteMySignatory: (id: number) => api.delete(`/certificates/signatories/mine/${id}`),
+};
+
+// A reviewer's own saved guide/template library - upload once, label it,
+// reuse across papers instead of re-uploading each time.
+export const reviewTemplatesApi = {
+  mine: () => api.get('/review-templates/mine'),
+  create: (label: string, file: File) => {
+    const fd = new FormData();
+    fd.append('label', label);
+    fd.append('file', file);
+    return api.post('/review-templates/mine', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  remove: (id: number) => api.delete(`/review-templates/mine/${id}`),
 };
 
 export const proceedingsApi = {

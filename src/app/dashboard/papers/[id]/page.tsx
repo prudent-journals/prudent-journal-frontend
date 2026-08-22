@@ -158,8 +158,34 @@ export default function DashboardPaperDetailPage() {
                     </div>
                   )}
                   <p className="text-sm text-navy-700 leading-relaxed">{review.content}</p>
+                  {review.guide_url && (
+                    <a href={review.guide_url} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-gold-700 hover:text-gold-800 font-medium mt-3">
+                      <FileText className="w-3.5 h-3.5" /> Reviewer&apos;s guide/template
+                    </a>
+                  )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* What to revise - the editor's own notes and guide, plus any
+              reviewer guide files, so this is visible even if the email
+              was missed or is being checked later. */}
+          {paper.status === 'revision_requested' && (paper.admin_notes || paper.revision_guide_url) && (
+            <div className="card p-6 border-2 border-orange-200 bg-orange-50/40">
+              <h2 className="font-serif text-lg text-navy-900 mb-2 flex items-center gap-2">
+                {paper.revision_type === 'major' ? 'Major' : 'Minor'} Revision Requested
+              </h2>
+              {paper.admin_notes && (
+                <p className="text-sm text-navy-700 leading-relaxed whitespace-pre-wrap mb-3">{paper.admin_notes}</p>
+              )}
+              {paper.revision_guide_url && (
+                <a href={paper.revision_guide_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-gold-700 hover:text-gold-800 font-medium">
+                  <FileText className="w-4 h-4" /> Download Revision Guide
+                </a>
+              )}
             </div>
           )}
 

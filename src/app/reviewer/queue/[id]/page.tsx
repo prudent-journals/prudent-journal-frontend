@@ -8,8 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { ArrowLeft, FileText, CheckCircle2, Send, Upload, Loader2 } from 'lucide-react';
-import { papersApi } from '@/lib/api';
-import { Paper, Review } from '@/types';
+import { papersApi, reviewTemplatesApi } from '@/lib/api';
+import { Paper, Review, ReviewTemplate } from '@/types';
 import { formatDate, getStatusLabel, getStatusColor, getErrorMessage, previewUrl } from '@/lib/utils';
 import { MANUSCRIPT_ACCEPT_ATTR } from '@/lib/uploads';
 
@@ -43,6 +43,9 @@ export default function ReviewPaperPage() {
   const [loading, setLoading] = useState(true);
   const [finalFile, setFinalFile] = useState<File | null>(null);
   const [uploadingFinal, setUploadingFinal] = useState(false);
+  const [guideFile, setGuideFile] = useState<File | null>(null);
+  const [templates, setTemplates] = useState<ReviewTemplate[]>([]);
+  const [templateId, setTemplateId] = useState<string>('');
 
   const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } =
     useForm<FormValues>({
@@ -56,13 +59,14 @@ export default function ReviewPaperPage() {
   const decision = watch('decision');
 
   useEffect(() => {
-    Promise.allSettled([papersApi.get(id), papersApi.myReviews()])
-      .then(([p, r]) => {
+    Promise.allSettled([papersApi.get(id), papersApi.myReviews(), reviewTemplatesApi.mine()])
+      .then(([p, r, t]) => {
         if (p.status === 'fulfilled') setPaper(p.value.data);
         if (r.status === 'fulfilled') {
           const mine = (r.value.data as Review[]).find((x) => x.paper_id === id);
           if (mine) setExisting(mine);
         }
+        if (t.status === 'fulfilled') setTemplates(t.value.data);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -84,7 +88,7 @@ export default function ReviewPaperPage() {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      await papersApi.submitReview(id, values);
+      await papersApi.submitReview(id, values, guideFile, templateId ? parseInt(templateId, 10) : null);
       toast.success('Review submitted. Thank you.');
       router.push('/reviewer/queue');
     } catch (err) {
@@ -200,6 +204,12 @@ export default function ReviewPaperPage() {
             .
           </p>
           <p className="font-sans text-navy-700 leading-relaxed whitespace-pre-wrap">{existing.content}</p>
+          {existing.guide_url && (
+            <a href={existing.guide_url} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-gold-700 hover:text-gold-800 font-medium mt-3">
+              <FileText className="w-4 h-4" /> Your uploaded guide/template
+            </a>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5 pt-5 border-t border-green-200">
             {CRITERIA.map(([key, label]) => (
               <div key={key}>
@@ -267,6 +277,52 @@ export default function ReviewPaperPage() {
             {errors.content && <p className="text-red-600 text-sm font-sans mt-1">{errors.content.message}</p>}
             <p className="font-sans text-xs text-navy-400 mt-2">
               An editor decides whether these comments are shared with the author.
+            </p>
+          </div>
+
+          <div>
+            <label className="block font-sans text-sm font-medium text-navy-800 mb-2">
+              Reviewer&apos;s Guide/Template <span className="text-navy-400 font-normal">(optional, PDF or Word)</span>
+            </label>
+
+            {templates.length > 0 && !guideFile && (
+              <div className="mb-3">
+                <label className="block font-sans text-xs text-navy-500 mb-1.5">Use a saved template</label>
+                <select
+                  value={templateId}
+                  onChange={(e) => setTemplateId(e.target.value)}
+                  className="input-base text-sm"
+                >
+                  <option value="">None - upload fresh instead</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>{t.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {guideFile ? (
+              <div className="flex items-center gap-2 p-3 rounded-xl border border-parchment-300 bg-parchment-50">
+                <FileText className="w-4 h-4 text-navy-500 flex-shrink-0" />
+                <span className="font-sans text-sm text-navy-700 truncate flex-1">{guideFile.name}</span>
+                <button type="button" onClick={() => setGuideFile(null)} className="font-sans text-xs text-red-600 hover:text-red-700">
+                  Remove
+                </button>
+              </div>
+            ) : (
+              !templateId && (
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={(e) => setGuideFile(e.target.files?.[0] || null)}
+                  className="font-sans text-sm text-navy-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-navy-900 file:text-parchment-50 file:text-sm file:cursor-pointer"
+                />
+              )
+            )}
+            <p className="font-sans text-xs text-navy-400 mt-2">
+              Pick one of your saved templates, or upload a fresh file for just this review. Either way it&apos;s
+              stored with identifying details removed before the editor or author ever sees it. Manage your
+              saved templates from your <Link href="/dashboard/profile" className="underline hover:text-navy-600">profile</Link>.
             </p>
           </div>
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, FileText, Eye, CheckCircle, XCircle, RefreshCw, Share2, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Eye, CheckCircle, XCircle, RefreshCw, Share2, Loader2, Upload, X } from 'lucide-react';
 import { papersApi } from '@/lib/api';
 import { Paper, Review, ReviewerOption } from '@/types';
 import { getStatusColor, getStatusLabel, formatDate, getErrorMessage, previewUrl } from '@/lib/utils';
@@ -17,6 +17,8 @@ export default function ChiefEditorPaperDetailPage() {
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState('');
   const [rejection, setRejection] = useState('');
+  const [revisionNotes, setRevisionNotes] = useState('');
+  const [revisionFile, setRevisionFile] = useState<File | null>(null);
   const [deciding, setDeciding] = useState(false);
 
   const id = parseInt(params.id as string);
@@ -42,6 +44,19 @@ export default function ChiefEditorPaperDetailPage() {
       const { data } = await papersApi.adminUpdate(id, { status, admin_notes: notes, rejection_reason: rejection, ...extra });
       setPaper(data);
       toast.success('Paper updated');
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setDeciding(false); }
+  };
+
+  const handleRequestRevision = async (type: 'minor' | 'major') => {
+    setDeciding(true);
+    try {
+      const { data } = await papersApi.requestRevision(id, type, revisionNotes, revisionFile);
+      setPaper(data);
+      setRevisionFile(null);
+      toast.success('Revision requested - the author has been emailed');
+      const { data: freshReviews } = await papersApi.getReviews(id);
+      setReviews(freshReviews);
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setDeciding(false); }
   };
@@ -83,9 +98,16 @@ export default function ChiefEditorPaperDetailPage() {
             <span>Submitted {formatDate(paper.created_at)}</span>
           </div>
         </div>
-        <span className={`badge text-sm px-3 py-1 flex-shrink-0 ${getStatusColor(paper.status)}`}>
-          {getStatusLabel(paper.status)}
-        </span>
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <span className={`badge text-sm px-3 py-1 ${getStatusColor(paper.status)}`}>
+            {getStatusLabel(paper.status)}
+          </span>
+          {paper.status === 'revision_requested' && paper.revision_type && (
+            <span className="badge text-xs bg-orange-50 text-orange-700 capitalize">
+              {paper.revision_type} revision
+            </span>
+          )}
+        </div>
       </div>
 
       {paper.status === 'accepted' && (
@@ -184,6 +206,12 @@ export default function ChiefEditorPaperDetailPage() {
                 )}
 
                 <p className="text-sm text-navy-600 leading-relaxed">{review.content}</p>
+                {review.guide_url && (
+                  <a href={review.guide_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-gold-700 hover:text-gold-800 font-medium mt-3">
+                    <FileText className="w-3.5 h-3.5" /> Reviewer&apos;s guide/template
+                  </a>
+                )}
               </div>
             ))}
           </div>
@@ -209,37 +237,74 @@ export default function ChiefEditorPaperDetailPage() {
             )}
           </div>
 
-          <div className="card p-5 space-y-3">
-            <h3 className="font-serif text-base text-navy-900 mb-3">Editorial Decision</h3>
+          <div className="card p-5 space-y-4">
+            <h3 className="font-serif text-base text-navy-900">Editorial Decision</h3>
 
-            <div>
-              <label className="text-xs text-navy-500 mb-1 block">Editorial Notes (internal)</label>
+            {/* Straight accept - no revision needed */}
+            <div className="space-y-2">
+              <label className="text-xs text-navy-500 block">Editorial Notes (internal)</label>
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
-                rows={3} className="input-base text-sm resize-none" placeholder="Internal notes..." />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
+                rows={2} className="input-base text-sm resize-none" placeholder="Internal notes, not sent to the author..." />
               <button onClick={() => handleDecision('accepted')} disabled={deciding}
-                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-green-100 text-green-700 text-sm font-medium hover:bg-green-200 transition-colors disabled:opacity-50">
+                className="w-full flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-green-100 text-green-700 text-sm font-medium hover:bg-green-200 transition-colors disabled:opacity-50">
                 <CheckCircle className="w-4 h-4" /> Accept
               </button>
-              <button onClick={() => handleDecision('revision_requested')} disabled={deciding}
-                className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-orange-100 text-orange-700 text-sm font-medium hover:bg-orange-200 transition-colors disabled:opacity-50">
-                <RefreshCw className="w-4 h-4" /> Request Revision
+            </div>
+
+            {/* Accept pending revision - minor or major */}
+            <div className="space-y-2 pt-3 border-t border-parchment-200">
+              <label className="text-xs text-navy-500 block">
+                Notes for the Author <span className="text-navy-400 font-normal">(sent in the revision email)</span>
+              </label>
+              <textarea value={revisionNotes} onChange={(e) => setRevisionNotes(e.target.value)}
+                rows={3} className="input-base text-sm resize-none" placeholder="What the author needs to address..." />
+
+              <label className="text-xs text-navy-500 block pt-1">
+                Revision Guide <span className="text-navy-400 font-normal">(optional, PDF or Word)</span>
+              </label>
+              {revisionFile ? (
+                <div className="flex items-center gap-2 p-2 rounded-lg border border-parchment-200 bg-parchment-50">
+                  <FileText className="w-4 h-4 text-navy-500 flex-shrink-0" />
+                  <span className="text-xs text-navy-700 truncate flex-1">{revisionFile.name}</span>
+                  <button onClick={() => setRevisionFile(null)} aria-label="Remove file" className="p-1 text-navy-400 hover:text-navy-700">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center gap-1.5 p-2 rounded-lg border border-dashed border-parchment-300 text-xs text-navy-500 hover:border-gold-400 hover:text-gold-700 cursor-pointer transition-colors">
+                  <Upload className="w-3.5 h-3.5" /> Attach a guide document
+                  <input type="file" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="hidden" onChange={(e) => setRevisionFile(e.target.files?.[0] || null)} />
+                </label>
+              )}
+
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button onClick={() => handleRequestRevision('minor')} disabled={deciding}
+                  className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-orange-100 text-orange-700 text-sm font-medium hover:bg-orange-200 transition-colors disabled:opacity-50">
+                  <RefreshCw className="w-4 h-4" /> Minor Revision
+                </button>
+                <button onClick={() => handleRequestRevision('major')} disabled={deciding}
+                  className="flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-orange-200 text-orange-800 text-sm font-medium hover:bg-orange-300 transition-colors disabled:opacity-50">
+                  <RefreshCw className="w-4 h-4" /> Major Revision
+                </button>
+              </div>
+              <p className="text-xs text-navy-400 font-sans">
+                Any reviews already submitted are shared with the author automatically along with this.
+              </p>
+            </div>
+
+            {/* Reject */}
+            <div className="space-y-2 pt-3 border-t border-parchment-200">
+              <label className="text-xs text-navy-500 block">Rejection Reason</label>
+              <textarea value={rejection} onChange={(e) => setRejection(e.target.value)}
+                rows={2} className="input-base text-sm resize-none" placeholder="Reason for rejection..." />
+              <button onClick={() => handleDecision('rejected')} disabled={deciding}
+                className="w-full flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-red-100 text-red-700 text-sm font-medium hover:bg-red-200 transition-colors disabled:opacity-50">
+                <XCircle className="w-4 h-4" /> Reject Paper
               </button>
             </div>
 
-            <div>
-              <label className="text-xs text-navy-500 mb-1 block">Rejection Reason</label>
-              <textarea value={rejection} onChange={(e) => setRejection(e.target.value)}
-                rows={2} className="input-base text-sm resize-none" placeholder="Reason for rejection..." />
-            </div>
-            <button onClick={() => handleDecision('rejected')} disabled={deciding}
-              className="w-full flex items-center justify-center gap-1.5 p-2.5 rounded-xl bg-red-100 text-red-700 text-sm font-medium hover:bg-red-200 transition-colors disabled:opacity-50">
-              <XCircle className="w-4 h-4" /> Reject Paper
-            </button>
-
-            <p className="text-xs text-navy-400 font-sans pt-1">
+            <p className="text-xs text-navy-400 font-sans pt-1 border-t border-parchment-200">
               Accepting authorizes the paper for publication. An administrator publishes it from here.
             </p>
           </div>

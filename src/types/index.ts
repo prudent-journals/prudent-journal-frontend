@@ -15,6 +15,9 @@ export type PaperStatus =
   | 'rejected'
   | 'published';
 export type ReviewDecision = 'accept' | 'reject' | 'revision';
+/** How much rework a revision-requested decision calls for - the editor's
+ *  own call, set on the paper when they request a revision. */
+export type RevisionType = 'minor' | 'major';
 export type ConferenceStatus = 'upcoming' | 'open' | 'closed' | 'completed';
 
 /** What someone registers as. The conference fee is a function of this. */
@@ -104,6 +107,8 @@ export interface Paper {
   cover_letter?: string;
   admin_notes?: string;
   rejection_reason?: string;
+  revision_type?: RevisionType;
+  revision_guide_url?: string;
   volume?: string;
   issue?: string;
   doi?: string;
@@ -120,7 +125,10 @@ export interface Paper {
 export interface Review {
   id: number;
   paper_id: number;
-  reviewer_id: number;
+  // Absent entirely (not just falsy) when this review is serialized for the
+  // paper's author - double-blind review, the reviewer's identity is never
+  // sent to them, not just hidden in the UI.
+  reviewer_id?: number;
   content: string;
   decision: ReviewDecision;
   originality_score?: number;
@@ -128,6 +136,7 @@ export interface Review {
   clarity_score?: number;
   relevance_score?: number;
   is_visible_to_author: boolean;
+  guide_url?: string;
   created_at: string;
   reviewer?: UserPublic;
   paper_title?: string | null;
@@ -324,6 +333,13 @@ export interface CertificateTemplate {
   background_url?: string | null;
   signatory_band_y: number;
   updated_at: string;
+}
+
+export interface ReviewTemplate {
+  id: number;
+  label: string;
+  file_url: string;
+  created_at: string;
 }
 
 export interface CertificateSignatory {
