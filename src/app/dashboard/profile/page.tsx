@@ -2,12 +2,112 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { Camera, Loader2, Save, PenTool, Trash2, Clock, CheckCircle2 } from 'lucide-react';
+import { Camera, Loader2, Save, PenTool, Trash2, Clock, CheckCircle2, FileText, Upload } from 'lucide-react';
 import { useAuthStore } from '@/lib/auth-store';
-import { usersApi, authApi, certificatesApi } from '@/lib/api';
-import { getInitials, getErrorMessage } from '@/lib/utils';
-import { CertificateSignatory } from '@/types';
+import { usersApi, authApi, certificatesApi, reviewTemplatesApi } from '@/lib/api';
+import { getInitials, getErrorMessage, formatDate } from '@/lib/utils';
+import { CertificateSignatory, ReviewTemplate } from '@/types';
 import toast from 'react-hot-toast';
+
+function ReviewTemplatesCard() {
+  const [rows, setRows] = useState<ReviewTemplate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [label, setLabel] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const load = useCallback(() => {
+    reviewTemplatesApi.mine()
+      .then(r => setRows(r.data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!label.trim() || !file) { toast.error('Give it a label and a file'); return; }
+    setSubmitting(true);
+    try {
+      await reviewTemplatesApi.create(label.trim(), file);
+      toast.success('Template saved');
+      setLabel(''); setFile(null);
+      load();
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setSubmitting(false); }
+  };
+
+  const onDelete = async (id: number) => {
+    try {
+      await reviewTemplatesApi.remove(id);
+      setRows(rows.filter(r => r.id !== id));
+    } catch (err) { toast.error(getErrorMessage(err)); }
+  };
+
+  return (
+    <div className="card p-6 space-y-4 mb-6">
+      <div>
+        <h2 className="font-serif text-lg text-navy-900 flex items-center gap-2">
+          <FileText className="w-4 h-4 text-gold-600" /> Review Templates
+        </h2>
+        <p className="text-sm text-navy-500 mt-1">
+          Save a guide/template document you use for reviews, so you can pick it from a list
+          instead of uploading it fresh every time. Each one is stripped of identifying details
+          the moment you save it here, before it&apos;s ever attached to a review.
+        </p>
+      </div>
+
+      {!loading && rows.length > 0 && (
+        <ul className="space-y-2">
+          {rows.map(row => (
+            <li key={row.id} className="flex items-center gap-3 p-3 rounded-lg bg-parchment-50 border border-parchment-200">
+              <FileText className="w-4 h-4 text-navy-400 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-navy-900 truncate">{row.label}</p>
+                <p className="text-xs text-navy-500">Saved {formatDate(row.created_at)}</p>
+              </div>
+              <a href={row.file_url} target="_blank" rel="noopener noreferrer"
+                className="text-xs text-gold-700 hover:text-gold-800 font-medium">
+                Preview
+              </a>
+              <button
+                type="button"
+                onClick={() => onDelete(row.id)}
+                aria-label={`Remove template ${row.label}`}
+                className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form onSubmit={onSubmit} className="grid sm:grid-cols-2 gap-3 pt-2 border-t border-parchment-200">
+        <div>
+          <label className="block text-sm font-medium text-navy-700 mb-1.5">Label</label>
+          <input value={label} onChange={e => setLabel(e.target.value)} placeholder="e.g. Standard review form" className="input-base" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-navy-700 mb-1.5">File (PDF or Word)</label>
+          <input
+            type="file"
+            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={e => setFile(e.target.files?.[0] || null)}
+            className="input-base"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <button type="submit" disabled={submitting} className="btn-outline">
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            Save Template
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
 function SignatureCard() {
   const [rows, setRows] = useState<CertificateSignatory[]>([]);
@@ -254,6 +354,8 @@ export default function ProfilePage() {
           Update Email
         </button>
       </form>
+
+      {(user.role === 'reviewer' || user.role === 'admin') && <ReviewTemplatesCard />}
 
       {(user.role === 'chief_editor' || user.role === 'reviewer') && <SignatureCard />}
 
