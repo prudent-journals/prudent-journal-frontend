@@ -7,6 +7,25 @@ import {
 } from 'lucide-react';
 import { parsePageRange, formatPageRange } from '@/lib/page-range';
 
+// pdfjs-dist 4.x calls Promise.withResolvers(), an ES2024 addition not shipped by
+// older mobile browsers (e.g. iOS Safari < 17.4), which otherwise throws before
+// any page can render.
+if (typeof Promise !== 'undefined' && typeof (Promise as unknown as { withResolvers?: unknown }).withResolvers !== 'function') {
+  (Promise as unknown as { withResolvers: <T>() => {
+    promise: Promise<T>;
+    resolve: (value: T | PromiseLike<T>) => void;
+    reject: (reason?: unknown) => void;
+  } }).withResolvers = function withResolvers<T>() {
+    let resolve!: (value: T | PromiseLike<T>) => void;
+    let reject!: (reason?: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  };
+}
+
 interface Props {
   url: string;
   title?: string;
