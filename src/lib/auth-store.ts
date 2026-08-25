@@ -113,6 +113,23 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
+if (typeof window !== 'undefined') {
+  // pj_token and pj_auth live in localStorage, shared by every tab of this
+  // origin - the request interceptor in api.ts reads pj_token fresh on every
+  // call, so a sign-in (or sign-out) in one tab silently redirects every
+  // other open tab's *requests* to the new session, even though each tab's
+  // own in-memory Zustand state - and therefore everything it has rendered -
+  // still reflects whoever was signed in before. Left alone, that is a
+  // different person's name in the sidebar next to another person's papers,
+  // reviews and notifications. Reloading re-derives this tab's state from
+  // whichever session is actually live, and route guards then send it
+  // wherever that session belongs.
+  window.addEventListener('storage', (e) => {
+    if (e.key !== 'pj_auth' || e.newValue === e.oldValue) return;
+    window.location.reload();
+  });
+}
+
 // Role helpers.
 export const isAdmin = (user: User | null) => user?.role === 'admin';
 

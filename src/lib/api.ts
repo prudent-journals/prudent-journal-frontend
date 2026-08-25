@@ -22,7 +22,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       localStorage.removeItem('pj_token');
-      localStorage.removeItem('pj_user');
+      localStorage.removeItem('pj_auth');
       window.location.href = '/auth/login';
     }
     return Promise.reject(error);
