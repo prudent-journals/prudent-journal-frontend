@@ -209,104 +209,123 @@ export default function PdfReader({ url, title, onDownload }: Props) {
     );
   }
 
+  const zoomControls = (
+    <>
+      <button
+        onClick={() => setScale((s) => Math.max(0.6, +(s - 0.2).toFixed(2)))}
+        aria-label="Zoom out"
+        className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+          expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
+        }`}
+      >
+        <ZoomOut className="w-4 h-4" />
+      </button>
+      <span className={`text-xs font-mono w-10 text-center ${
+        expanded ? 'text-parchment-400' : 'text-navy-500'
+      }`}>
+        {Math.round(scale * 100)}%
+      </span>
+      <button
+        onClick={() => setScale((s) => Math.min(3, +(s + 0.2).toFixed(2)))}
+        aria-label="Zoom in"
+        className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+          expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
+        }`}
+      >
+        <ZoomIn className="w-4 h-4" />
+      </button>
+    </>
+  );
+
   return (
     <div className={expanded
       ? 'fixed inset-0 z-50 bg-navy-950 flex flex-col'
       : 'rounded-2xl border border-parchment-300 bg-white overflow-hidden'}>
 
       {/* Toolbar */}
-      <div className={`flex items-center gap-2 px-3 py-2.5 border-b ${
+      <div className={`border-b ${
         expanded ? 'bg-navy-900 border-navy-800' : 'bg-parchment-100 border-parchment-200'
       }`}>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setPage((p) => Math.max(p - 1, 1))}
-            disabled={page <= 1 || loading}
-            aria-label="Previous page"
-            className={`w-9 h-9 rounded-lg flex items-center justify-center disabled:opacity-30 transition-colors ${
-              expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
-            }`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
-          <div className={`flex items-center gap-1.5 text-sm font-sans ${
-            expanded ? 'text-parchment-200' : 'text-navy-700'
-          }`}>
-            <input
-              type="number"
-              min={1}
-              max={numPages || 1}
-              value={page}
-              onChange={(e) => {
-                const v = parseInt(e.target.value, 10);
-                if (!Number.isNaN(v) && v >= 1 && v <= numPages) setPage(v);
-              }}
-              aria-label="Page number"
-              className={`w-12 text-center rounded-md py-1 font-mono text-sm border ${
-                expanded
-                  ? 'bg-navy-800 border-navy-700 text-parchment-100'
-                  : 'bg-white border-parchment-300 text-navy-800'
+        {/* Primary row: always fits, always visible - nav + download */}
+        <div className="flex items-center gap-2 px-3 py-2.5">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+              disabled={page <= 1 || loading}
+              aria-label="Previous page"
+              className={`w-9 h-9 rounded-lg flex items-center justify-center disabled:opacity-30 transition-colors shrink-0 ${
+                expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
               }`}
-            />
-            <span className="opacity-60">of {numPages || '-'}</span>
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div className={`flex items-center gap-1.5 text-sm font-sans ${
+              expanded ? 'text-parchment-200' : 'text-navy-700'
+            }`}>
+              <input
+                type="number"
+                min={1}
+                max={numPages || 1}
+                value={page}
+                onChange={(e) => {
+                  const v = parseInt(e.target.value, 10);
+                  if (!Number.isNaN(v) && v >= 1 && v <= numPages) setPage(v);
+                }}
+                aria-label="Page number"
+                className={`w-12 text-center rounded-md py-1 font-mono text-sm border ${
+                  expanded
+                    ? 'bg-navy-800 border-navy-700 text-parchment-100'
+                    : 'bg-white border-parchment-300 text-navy-800'
+                }`}
+              />
+              <span className="opacity-60 whitespace-nowrap">of {numPages || '-'}</span>
+            </div>
+
+            <button
+              onClick={() => setPage((p) => Math.min(p + 1, numPages))}
+              disabled={page >= numPages || loading}
+              aria-label="Next page"
+              className={`w-9 h-9 rounded-lg flex items-center justify-center disabled:opacity-30 transition-colors shrink-0 ${
+                expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
+              }`}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
-          <button
-            onClick={() => setPage((p) => Math.min(p + 1, numPages))}
-            disabled={page >= numPages || loading}
-            aria-label="Next page"
-            className={`w-9 h-9 rounded-lg flex items-center justify-center disabled:opacity-30 transition-colors ${
-              expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
-            }`}
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+          {/* Zoom controls: inline on tablet/desktop, moved to their own row on mobile so this row never overflows */}
+          <div className="hidden sm:flex items-center gap-1">
+            {zoomControls}
+          </div>
+
+          <div className="ml-auto flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              aria-label={expanded ? 'Exit full screen' : 'Full screen'}
+              className={`w-9 h-9 rounded-lg items-center justify-center transition-colors hidden sm:flex ${
+                expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
+              }`}
+            >
+              {expanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+
+            <button
+              onClick={() => setPickerOpen(true)}
+              disabled={loading}
+              className="btn-primary py-1.5 px-3 text-sm ml-1 disabled:opacity-50 shrink-0"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Download</span>
+            </button>
+          </div>
         </div>
 
-        <div className="ml-auto flex items-center gap-1">
-          <button
-            onClick={() => setScale((s) => Math.max(0.6, +(s - 0.2).toFixed(2)))}
-            aria-label="Zoom out"
-            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-              expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
-            }`}
-          >
-            <ZoomOut className="w-4 h-4" />
-          </button>
-          <span className={`text-xs font-mono w-10 text-center ${
-            expanded ? 'text-parchment-400' : 'text-navy-500'
-          }`}>
-            {Math.round(scale * 100)}%
-          </span>
-          <button
-            onClick={() => setScale((s) => Math.min(3, +(s + 0.2).toFixed(2)))}
-            aria-label="Zoom in"
-            className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
-              expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
-            }`}
-          >
-            <ZoomIn className="w-4 h-4" />
-          </button>
-
-          <button
-            onClick={() => setExpanded((v) => !v)}
-            aria-label={expanded ? 'Exit full screen' : 'Full screen'}
-            className={`w-9 h-9 rounded-lg items-center justify-center transition-colors hidden sm:flex ${
-              expanded ? 'text-parchment-200 hover:bg-navy-800' : 'text-navy-700 hover:bg-parchment-200'
-            }`}
-          >
-            {expanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-
-          <button
-            onClick={() => setPickerOpen(true)}
-            disabled={loading}
-            className="btn-primary py-1.5 px-3 text-sm ml-1 disabled:opacity-50"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Download</span>
-          </button>
+        {/* Secondary row: zoom controls, mobile only */}
+        <div className={`flex sm:hidden items-center justify-center gap-1 px-3 pb-2.5 -mt-0.5 border-t ${
+          expanded ? 'border-navy-800/60' : 'border-parchment-200'
+        }`}>
+          {zoomControls}
         </div>
       </div>
 
