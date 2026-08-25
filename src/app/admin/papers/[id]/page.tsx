@@ -11,6 +11,8 @@ import { getStatusColor, getStatusLabel, formatDate, getErrorMessage, previewUrl
 import toast from 'react-hot-toast';
 import { MANUSCRIPT_ACCEPT_ATTR, PDF_ACCEPT, MAX_DOCUMENT_SIZE } from '@/lib/uploads';
 import ReviewerGuideDetail from '@/components/reviews/ReviewerGuideDetail';
+import ReviewerAssignmentPanel from '@/components/reviews/ReviewerAssignmentPanel';
+import ReviewAnalyticsPanel from '@/components/reviews/ReviewAnalyticsPanel';
 
 export default function AdminPaperDetailPage() {
   const params = useParams();
@@ -29,6 +31,7 @@ export default function AdminPaperDetailPage() {
   const [revisionNotes, setRevisionNotes] = useState('');
   const [revisionFile, setRevisionFile] = useState<File | null>(null);
   const [deciding, setDeciding] = useState(false);
+  const [analyticsKey, setAnalyticsKey] = useState(0);
 
   const id = parseInt(params.id as string);
 
@@ -57,8 +60,14 @@ export default function AdminPaperDetailPage() {
     try {
       const { data } = await papersApi.adminUpdate(id, { status, admin_notes: notes, rejection_reason: rejection, ...extra });
       setPaper(data);
+      setAnalyticsKey((k) => k + 1);
       toast.success('Paper updated');
     } catch (err) { toast.error(getErrorMessage(err)); }
+  };
+
+  const handleReviewersUpdate = (updated: Paper) => {
+    setPaper(updated);
+    setAnalyticsKey((k) => k + 1);
   };
 
   const handleRequestRevision = async (type: 'minor' | 'major') => {
@@ -67,19 +76,12 @@ export default function AdminPaperDetailPage() {
       const { data } = await papersApi.requestRevision(id, type, revisionNotes, revisionFile);
       setPaper(data);
       setRevisionFile(null);
+      setAnalyticsKey((k) => k + 1);
       toast.success('Revision requested - the author has been emailed');
       const { data: freshReviews } = await papersApi.getReviews(id);
       setReviews(freshReviews);
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setDeciding(false); }
-  };
-
-  const handleAssignReviewer = async (reviewerId: string) => {
-    try {
-      const { data } = await papersApi.adminUpdate(id, { assigned_reviewer_id: parseInt(reviewerId) });
-      setPaper(data);
-      toast.success('Reviewer assigned and notified');
-    } catch { toast.error('Failed to assign reviewer'); }
   };
 
   const handlePublish = async () => {
@@ -147,6 +149,8 @@ export default function AdminPaperDetailPage() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left: Paper content */}
         <div className="lg:col-span-2 space-y-6">
+          <ReviewAnalyticsPanel paperId={id} refreshKey={analyticsKey} />
+
           {/* Abstract */}
           <div className="card p-6">
             <h2 className="font-serif text-lg text-navy-900 mb-3">Abstract</h2>
@@ -263,22 +267,12 @@ export default function AdminPaperDetailPage() {
 
         {/* Right: Actions */}
         <div className="space-y-6">
-          {/* Assign reviewer */}
+          {/* Assign reviewers */}
           <div className="card p-5">
-            <h3 className="font-serif text-base text-navy-900 mb-3">Assign Reviewer</h3>
-            <select
-              value={paper.assigned_reviewer_id || ''}
-              onChange={e => handleAssignReviewer(e.target.value)}
-              className="input-base text-sm"
-            >
-              <option value="">Select reviewer...</option>
-              {reviewers.map(r => <option key={r.id} value={r.id}>{r.full_name}</option>)}
-            </select>
-            {paper.assigned_reviewer_id && (
-              <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Reviewer assigned
-              </p>
-            )}
+            <h3 className="font-serif text-base text-navy-900 mb-3">
+              Assigned Reviewers {paper.assigned_reviewers.length > 0 && `(${paper.assigned_reviewers.length})`}
+            </h3>
+            <ReviewerAssignmentPanel paper={paper} reviewers={reviewers} onUpdate={handleReviewersUpdate} />
           </div>
 
           {/* Status actions */}

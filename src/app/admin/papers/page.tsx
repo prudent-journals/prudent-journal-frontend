@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Search, Filter, FileText, User, ChevronRight } from 'lucide-react';
 import { papersApi, usersApi } from '@/lib/api';
 import { Paper, PaperStatus, User as UserType } from '@/types';
-import { getStatusColor, getStatusLabel, formatDate, truncate, cn } from '@/lib/utils';
+import { getStatusColor, getStatusLabel, formatDate, truncate, cn, getErrorMessage } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 const STATUSES: PaperStatus[] = [
@@ -36,10 +36,10 @@ export default function AdminPapersPage() {
 
   const assignReviewer = async (paperId: number, reviewerId: number) => {
     try {
-      await papersApi.adminUpdate(paperId, { assigned_reviewer_id: reviewerId });
+      await papersApi.assignReviewer(paperId, reviewerId);
       toast.success('Reviewer assigned');
       fetchPapers();
-    } catch { toast.error('Failed to assign reviewer'); }
+    } catch (err) { toast.error(getErrorMessage(err)); }
   };
 
   const updateStatus = async (paperId: number, status: PaperStatus) => {
@@ -139,20 +139,31 @@ export default function AdminPapersPage() {
                     </select>
                   </td>
                   <td className="px-4 py-4">
-                    {reviewers.length > 0 ? (
-                      <select
-                        value={paper.assigned_reviewer_id || ''}
-                        onChange={e => e.target.value && assignReviewer(paper.id, parseInt(e.target.value))}
-                        className="text-xs text-navy-600 bg-transparent border-b border-parchment-300 focus:outline-none"
-                      >
-                        <option value="">Assign...</option>
-                        {reviewers.map(r => (
-                          <option key={r.id} value={r.id}>{r.full_name}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <span className="text-xs text-navy-400"> - </span>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {paper.assigned_reviewers.length > 0 && (
+                        <span className="text-xs text-navy-600 truncate max-w-[160px]">
+                          {paper.assigned_reviewers.map(r => r.full_name).join(', ')}
+                        </span>
+                      )}
+                      {(() => {
+                        const assignedIds = new Set(paper.assigned_reviewers.map(r => r.id));
+                        const available = reviewers.filter(r => !assignedIds.has(r.id));
+                        return available.length > 0 ? (
+                          <select
+                            value=""
+                            onChange={e => e.target.value && assignReviewer(paper.id, parseInt(e.target.value))}
+                            className="text-xs text-navy-500 bg-transparent border-b border-parchment-300 focus:outline-none"
+                          >
+                            <option value="">{paper.assigned_reviewers.length > 0 ? '+ Add reviewer...' : 'Assign...'}</option>
+                            {available.map(r => (
+                              <option key={r.id} value={r.id}>{r.full_name}</option>
+                            ))}
+                          </select>
+                        ) : paper.assigned_reviewers.length === 0 ? (
+                          <span className="text-xs text-navy-400"> - </span>
+                        ) : null;
+                      })()}
+                    </div>
                   </td>
                   <td className="px-4 py-4 text-xs text-navy-400 whitespace-nowrap">
                     {formatDate(paper.created_at)}

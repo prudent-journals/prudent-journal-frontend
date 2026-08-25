@@ -82,6 +82,12 @@ export const papersApi = {
     if (file) fd.append('file', file);
     return api.post(`/papers/${id}/request-revision`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
+  // Many-to-one: a paper can carry several independent reviewers at once.
+  assignReviewer: (paperId: number, reviewerId: number) =>
+    api.post(`/papers/${paperId}/reviewers`, { reviewer_id: reviewerId }),
+  unassignReviewer: (paperId: number, reviewerId: number) =>
+    api.delete(`/papers/${paperId}/reviewers/${reviewerId}`),
+  reviewAnalytics: (paperId: number) => api.get(`/papers/${paperId}/review-analytics`),
   // Chief editor dashboard
   editorReviewers: () => api.get('/papers/editor/reviewers'),
   editorStats: () => api.get('/papers/editor/stats'),

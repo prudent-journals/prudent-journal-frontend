@@ -23,8 +23,8 @@ export default function AdminReviewQueuePage() {
     (p) => !query || p.title.toLowerCase().includes(query.toLowerCase()),
   );
 
-  const unassigned = papers.filter((p) => !p.assigned_reviewer_id).length;
-  const inReview = papers.filter((p) => p.assigned_reviewer_id).length;
+  const unassigned = papers.filter((p) => p.assigned_reviewers.length === 0).length;
+  const inReview = papers.filter((p) => p.assigned_reviewers.length > 0).length;
 
   return (
     <div className="p-6 lg:p-10 max-w-6xl">
@@ -78,8 +78,12 @@ export default function AdminReviewQueuePage() {
                 <div className="flex flex-wrap items-center gap-2 mb-1.5">
                   <span className={`badge ${getStatusColor(paper.status)}`}>{getStatusLabel(paper.status)}</span>
                   <span className="badge bg-parchment-200 text-navy-600 capitalize">{paper.paper_type}</span>
-                  {!paper.assigned_reviewer_id && (
+                  {paper.assigned_reviewers.length === 0 ? (
                     <span className="badge bg-gold-100 text-gold-700">Needs a reviewer</span>
+                  ) : (
+                    <span className="badge bg-navy-50 text-navy-600">
+                      {paper.assigned_reviewers.length} reviewer{paper.assigned_reviewers.length === 1 ? '' : 's'}
+                    </span>
                   )}
                 </div>
                 <h3 className="font-serif text-lg text-navy-900 group-hover:text-gold-700 transition-colors leading-snug">

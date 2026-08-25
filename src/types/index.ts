@@ -114,7 +114,8 @@ export interface Paper {
   doi?: string;
   author_id: number;
   conference_id?: number;
-  assigned_reviewer_id?: number;
+  // Many-to-one: a paper can carry several independent reviewers at once.
+  assigned_reviewers: UserPublic[];
   created_at: string;
   updated_at: string;
   author?: UserPublic;
@@ -194,6 +195,35 @@ export interface EditorStats {
   status_counts: Record<string, number>;
   reviewer_workload: ReviewerWorkload[];
   monthly_submissions: MonthlySubmissions[];
+}
+
+// One paper's multi-reviewer picture - who is assigned, who has filed,
+// and how their scores/decisions line up.
+
+export interface ReviewerProgress {
+  reviewer_id: number;
+  reviewer_name: string;
+  status: 'pending' | 'submitted';
+  decision?: ReviewDecision | null;
+  overall_marks?: number | null;
+  submitted_at?: string | null;
+}
+
+export interface ScoreAverages {
+  originality?: number | null;
+  methodology?: number | null;
+  clarity?: number | null;
+  relevance?: number | null;
+  overall_marks?: number | null;
+}
+
+export interface PaperReviewAnalytics {
+  assigned_count: number;
+  submitted_count: number;
+  decision_counts: Record<string, number>;
+  consensus?: 'unanimous' | 'split' | null;
+  averages: ScoreAverages;
+  reviewers: ReviewerProgress[];
 }
 
 // Conference
