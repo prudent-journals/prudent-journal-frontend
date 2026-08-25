@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { ReviewGuide } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -71,17 +72,9 @@ export const papersApi = {
     data: {
       content: string; decision: string;
       originality_score: number; methodology_score: number; clarity_score: number; relevance_score: number;
+      guide: ReviewGuide;
     },
-    file?: File | null,
-    templateId?: number | null,
-  ) => {
-    const fd = new FormData();
-    Object.entries(data).forEach(([k, v]) => fd.append(k, String(v)));
-    if (file) fd.append('file', file);
-    else if (templateId) fd.append('template_id', String(templateId));
-    return api.post(`/papers/${paperId}/reviews`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-  },
-  shareReview: (paperId: number, reviewId: number) => api.patch(`/papers/${paperId}/reviews/${reviewId}/share`),
+  ) => api.post(`/papers/${paperId}/reviews`, data),
   requestRevision: (id: number, revisionType: 'minor' | 'major', notes: string, file?: File | null) => {
     const fd = new FormData();
     fd.append('revision_type', revisionType);
@@ -172,19 +165,6 @@ export const certificatesApi = {
     return api.post('/certificates/signatories/mine', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
   deleteMySignatory: (id: number) => api.delete(`/certificates/signatories/mine/${id}`),
-};
-
-// A reviewer's own saved guide/template library - upload once, label it,
-// reuse across papers instead of re-uploading each time.
-export const reviewTemplatesApi = {
-  mine: () => api.get('/review-templates/mine'),
-  create: (label: string, file: File) => {
-    const fd = new FormData();
-    fd.append('label', label);
-    fd.append('file', file);
-    return api.post('/review-templates/mine', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-  },
-  remove: (id: number) => api.delete(`/review-templates/mine/${id}`),
 };
 
 export const proceedingsApi = {

@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, FileText, Eye, CheckCircle, XCircle, RefreshCw, Share2, Loader2, Upload, X } from 'lucide-react';
+import { ArrowLeft, FileText, Eye, CheckCircle, XCircle, RefreshCw, Loader2, Upload, X } from 'lucide-react';
 import { papersApi } from '@/lib/api';
 import { Paper, Review, ReviewerOption } from '@/types';
 import { getStatusColor, getStatusLabel, formatDate, getErrorMessage, previewUrl } from '@/lib/utils';
+import { MANUSCRIPT_ACCEPT_ATTR } from '@/lib/uploads';
+import ReviewerGuideDetail from '@/components/reviews/ReviewerGuideDetail';
 import toast from 'react-hot-toast';
 
 export default function ChiefEditorPaperDetailPage() {
@@ -20,6 +22,8 @@ export default function ChiefEditorPaperDetailPage() {
   const [revisionNotes, setRevisionNotes] = useState('');
   const [revisionFile, setRevisionFile] = useState<File | null>(null);
   const [deciding, setDeciding] = useState(false);
+  const [replaceFile, setReplaceFile] = useState<File | null>(null);
+  const [replacing, setReplacing] = useState(false);
 
   const id = parseInt(params.id as string);
 
@@ -69,13 +73,16 @@ export default function ChiefEditorPaperDetailPage() {
     } catch { toast.error('Failed to assign reviewer'); }
   };
 
-  const handleShareReview = async (reviewId: number) => {
+  const handleReplaceDocument = async () => {
+    if (!replaceFile) return;
+    setReplacing(true);
     try {
-      await papersApi.shareReview(id, reviewId);
-      toast.success('Review shared with author');
-      const { data } = await papersApi.getReviews(id);
-      setReviews(data);
-    } catch { toast.error('Failed to share review'); }
+      const { data } = await papersApi.replaceDocument(id, replaceFile);
+      setPaper(data);
+      setReplaceFile(null);
+      toast.success('Document replaced with the final version');
+    } catch (err) { toast.error(getErrorMessage(err)); }
+    finally { setReplacing(false); }
   };
 
   if (loading) return <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin text-navy-400 mx-auto" /></div>;
@@ -155,6 +162,33 @@ export default function ChiefEditorPaperDetailPage() {
                 </a>
               )}
             </div>
+
+            {/* Once you and the author have agreed the final version offline,
+                upload it here. It replaces the working document and becomes
+                what gets published. */}
+            {paper.status !== 'published' && (
+              <div className="mt-4 pt-4 border-t border-parchment-200">
+                <p className="font-sans text-xs text-navy-500 mb-2">
+                  Replace with the final agreed document
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="file"
+                    accept={MANUSCRIPT_ACCEPT_ATTR}
+                    onChange={(e) => setReplaceFile(e.target.files?.[0] || null)}
+                    className="font-sans text-xs text-navy-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-navy-900 file:text-parchment-50 file:text-xs file:cursor-pointer"
+                  />
+                  <button
+                    onClick={handleReplaceDocument}
+                    disabled={!replaceFile || replacing}
+                    className="btn-outline py-1.5 text-xs disabled:opacity-50"
+                  >
+                    {replacing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    Replace
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="card p-6">
@@ -176,15 +210,9 @@ export default function ChiefEditorPaperDetailPage() {
                       {review.decision}
                     </span>
                   </div>
-                  {!review.is_visible_to_author && (
-                    <button onClick={() => handleShareReview(review.id)}
-                      className="flex items-center gap-1.5 text-xs text-gold-600 hover:text-gold-700 font-medium">
-                      <Share2 className="w-3.5 h-3.5" /> Share with Author
-                    </button>
-                  )}
                   {review.is_visible_to_author && (
                     <span className="text-xs text-green-600 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" /> Shared
+                      <CheckCircle className="w-3 h-3" /> Shared with author
                     </span>
                   )}
                 </div>
@@ -206,14 +234,15 @@ export default function ChiefEditorPaperDetailPage() {
                 )}
 
                 <p className="text-sm text-navy-600 leading-relaxed">{review.content}</p>
-                {review.guide_url && (
-                  <a href={review.guide_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-gold-700 hover:text-gold-800 font-medium mt-3">
-                    <FileText className="w-3.5 h-3.5" /> Reviewer&apos;s guide/template
-                  </a>
-                )}
+                <ReviewerGuideDetail guide={review.guide} />
               </div>
             ))}
+            {reviews.length > 0 && (
+              <p className="text-xs text-navy-400 font-sans pt-1">
+                Whether the author sees a review is decided by your decision below: accept never shares
+                it, reject and revision requested always do.
+              </p>
+            )}
           </div>
         </div>
 

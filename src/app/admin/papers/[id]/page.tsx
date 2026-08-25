@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, FileText, Upload, Eye, CheckCircle, XCircle, RefreshCw, Share2, Loader2, X } from 'lucide-react';
+import { ArrowLeft, FileText, Upload, Eye, CheckCircle, XCircle, RefreshCw, Loader2, X } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import { papersApi, usersApi } from '@/lib/api';
 import { Paper, Review, User } from '@/types';
 import { getStatusColor, getStatusLabel, formatDate, getErrorMessage, previewUrl } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { MANUSCRIPT_ACCEPT_ATTR, PDF_ACCEPT, MAX_DOCUMENT_SIZE } from '@/lib/uploads';
+import ReviewerGuideDetail from '@/components/reviews/ReviewerGuideDetail';
 
 export default function AdminPaperDetailPage() {
   const params = useParams();
@@ -109,15 +110,6 @@ export default function AdminPaperDetailPage() {
       toast.success('Document replaced with the final version');
     } catch (err) { toast.error(getErrorMessage(err)); }
     finally { setReplacing(false); }
-  };
-
-  const handleShareReview = async (reviewId: number) => {
-    try {
-      await papersApi.shareReview(id, reviewId);
-      toast.success('Review shared with author');
-      const { data } = await papersApi.getReviews(id);
-      setReviews(data);
-    } catch { toast.error('Failed to share review'); }
   };
 
   if (loading) return <div className="p-8 text-center"><Loader2 className="w-8 h-8 animate-spin text-navy-400 mx-auto" /></div>;
@@ -238,15 +230,9 @@ export default function AdminPaperDetailPage() {
                       {review.decision}
                     </span>
                   </div>
-                  {!review.is_visible_to_author && (
-                    <button onClick={() => handleShareReview(review.id)}
-                      className="flex items-center gap-1.5 text-xs text-gold-600 hover:text-gold-700 font-medium">
-                      <Share2 className="w-3.5 h-3.5" /> Share with Author
-                    </button>
-                  )}
                   {review.is_visible_to_author && (
                     <span className="text-xs text-green-600 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" /> Shared
+                      <CheckCircle className="w-3 h-3" /> Shared with author
                     </span>
                   )}
                 </div>
@@ -269,12 +255,7 @@ export default function AdminPaperDetailPage() {
                 )}
 
                 <p className="text-sm text-navy-600 leading-relaxed">{review.content}</p>
-                {review.guide_url && (
-                  <a href={review.guide_url} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs text-gold-700 hover:text-gold-800 font-medium mt-3">
-                    <FileText className="w-3.5 h-3.5" /> Reviewer&apos;s guide/template
-                  </a>
-                )}
+                <ReviewerGuideDetail guide={review.guide} />
               </div>
             ))}
           </div>

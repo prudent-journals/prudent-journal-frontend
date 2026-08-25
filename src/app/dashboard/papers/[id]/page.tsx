@@ -158,11 +158,27 @@ export default function DashboardPaperDetailPage() {
                     </div>
                   )}
                   <p className="text-sm text-navy-700 leading-relaxed">{review.content}</p>
-                  {review.guide_url && (
-                    <a href={review.guide_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs text-gold-700 hover:text-gold-800 font-medium mt-3">
-                      <FileText className="w-3.5 h-3.5" /> Reviewer&apos;s guide/template
-                    </a>
+                  {review.guide && (review.guide.importance_correction_feedback ||
+                    review.guide.objective_evaluation.some((r) => r.correction_feedback) ||
+                    review.guide.subjective_evaluation.some((r) => r.correction_feedback)) && (
+                    <div className="mt-3 pt-3 border-t border-parchment-200 space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-widest text-navy-400">Correction/Feedback</p>
+                      {review.guide.importance_correction_feedback && (
+                        <p className="text-sm text-navy-700 whitespace-pre-wrap">{review.guide.importance_correction_feedback}</p>
+                      )}
+                      {review.guide.objective_evaluation.filter((r) => r.correction_feedback).map((r) => (
+                        <p key={r.key} className="text-sm text-navy-700">
+                          <span className="font-medium">{r.label}</span>
+                          {r.rating && <span className="text-navy-400"> ({r.rating}/5)</span>}
+                          {': '}{r.correction_feedback}
+                        </p>
+                      ))}
+                      {review.guide.subjective_evaluation.filter((r) => r.correction_feedback).map((r) => (
+                        <p key={r.key} className="text-sm text-navy-700">
+                          <span className="font-medium">{r.label}</span>{': '}{r.correction_feedback}
+                        </p>
+                      ))}
+                    </div>
                   )}
                 </div>
               ))}

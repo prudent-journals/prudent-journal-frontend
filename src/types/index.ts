@@ -122,6 +122,33 @@ export interface Paper {
 
 // Review
 
+export interface ObjectiveCriterionResult {
+  key: string;
+  label: string;
+  rating?: number | null;
+  correction_feedback?: string | null;
+}
+
+export interface SubjectiveQuestionResult {
+  key: string;
+  label: string;
+  answer?: boolean | null;
+  correction_feedback?: string | null;
+}
+
+export interface ReviewGuide {
+  ai_used: boolean;
+  importance_comment?: string | null;
+  importance_correction_feedback?: string | null;
+  objective_evaluation: ObjectiveCriterionResult[];
+  subjective_evaluation: SubjectiveQuestionResult[];
+  // Editor-only - absent whenever this guide reaches the author (API
+  // response or email); present only when the chief editor or admin reads it.
+  confidential_comments?: string | null;
+  competing_interest?: string | null;
+  overall_marks?: number | null;
+}
+
 export interface Review {
   id: number;
   paper_id: number;
@@ -136,7 +163,7 @@ export interface Review {
   clarity_score?: number;
   relevance_score?: number;
   is_visible_to_author: boolean;
-  guide_url?: string;
+  guide?: ReviewGuide | null;
   created_at: string;
   reviewer?: UserPublic;
   paper_title?: string | null;
@@ -333,13 +360,6 @@ export interface CertificateTemplate {
   background_url?: string | null;
   signatory_band_y: number;
   updated_at: string;
-}
-
-export interface ReviewTemplate {
-  id: number;
-  label: string;
-  file_url: string;
-  created_at: string;
 }
 
 export interface CertificateSignatory {
