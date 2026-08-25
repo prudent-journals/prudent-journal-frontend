@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   Activity, Database, Server, Mail, HardDrive, RefreshCw, Loader2,
   CheckCircle2, AlertTriangle, XCircle, Users, FileText, Star,
-  BookOpen, Calendar, Award,
+  BookOpen, Calendar, Award, Bell, Trash2,
 } from 'lucide-react';
 import { systemApi } from '@/lib/api';
 import { getErrorMessage } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 type Status = 'ok' | 'degraded' | 'down';
 
@@ -63,6 +64,7 @@ export default function AdminSystemPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+  const [clearing, setClearing] = useState<'read' | 'older_than' | 'all' | null>(null);
 
   const load = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
@@ -87,6 +89,26 @@ export default function AdminSystemPage() {
   }, [load]);
 
   const overall = health ? STATUS_META[health.status] : null;
+
+  const clearNotifications = async (scope: 'read' | 'older_than' | 'all') => {
+    const confirmText = scope === 'read'
+      ? 'Clear every read notification, for every user? This cannot be undone.'
+      : scope === 'older_than'
+        ? 'Clear every notification older than 30 days, read or not, for every user? This cannot be undone.'
+        : 'Clear every notification for every user, read or not? This cannot be undone.';
+    if (!window.confirm(confirmText)) return;
+
+    setClearing(scope);
+    try {
+      const { data } = await systemApi.clearNotifications(scope, scope === 'older_than' ? 30 : undefined);
+      toast.success(data.message);
+      load(true);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setClearing(null);
+    }
+  };
 
   return (
     <div className="p-6 lg:p-10 max-w-6xl">
@@ -200,6 +222,43 @@ export default function AdminSystemPage() {
                   </div>
                 );
               })}
+            </div>
+          </section>
+
+          {/* Data maintenance */}
+          <section className="mb-8">
+            <h2 className="font-serif text-xl text-navy-900 mb-1 flex items-center gap-2">
+              <Bell className="w-5 h-5 text-navy-500" /> Notification History
+            </h2>
+            <p className="font-sans text-sm text-navy-500 mb-4">
+              System-wide notification history has no automatic cleanup - every status change and review
+              submission adds to it, for every user, indefinitely. Clear it here as housekeeping.
+            </p>
+            <div className="card p-6 grid sm:grid-cols-3 gap-3">
+              <button
+                onClick={() => clearNotifications('read')}
+                disabled={clearing !== null}
+                className="btn-outline justify-center disabled:opacity-50"
+              >
+                {clearing === 'read' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Clear read notifications
+              </button>
+              <button
+                onClick={() => clearNotifications('older_than')}
+                disabled={clearing !== null}
+                className="btn-outline justify-center disabled:opacity-50"
+              >
+                {clearing === 'older_than' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Clear older than 30 days
+              </button>
+              <button
+                onClick={() => clearNotifications('all')}
+                disabled={clearing !== null}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border-2 border-red-200 text-red-700 text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-50"
+              >
+                {clearing === 'all' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                Clear all notifications
+              </button>
             </div>
           </section>
 

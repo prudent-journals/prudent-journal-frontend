@@ -13,6 +13,12 @@ const STATUSES: PaperStatus[] = [
   'resubmitted', 'accepted', 'rejected', 'published'
 ];
 
+// "published" is deliberately excluded here - it requires a typeset PDF and
+// creates the public Publication record, so it's reachable only through the
+// dedicated Publish control on the paper detail page, never this quick
+// status dropdown. The backend rejects it through this path too.
+const EDITABLE_STATUSES = STATUSES.filter(s => s !== 'published');
+
 export default function AdminPapersPage() {
   const [papers, setPapers] = useState<Paper[]>([]);
   const [reviewers, setReviewers] = useState<UserType[]>([]);
@@ -130,13 +136,17 @@ export default function AdminPapersPage() {
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <select
-                      value={paper.status}
-                      onChange={e => updateStatus(paper.id, e.target.value as PaperStatus)}
-                      className={`badge cursor-pointer border-0 ${getStatusColor(paper.status)} appearance-none pr-1`}
-                    >
-                      {STATUSES.map(s => <option key={s} value={s}>{getStatusLabel(s)}</option>)}
-                    </select>
+                    {paper.status === 'published' ? (
+                      <span className={`badge ${getStatusColor(paper.status)}`}>{getStatusLabel(paper.status)}</span>
+                    ) : (
+                      <select
+                        value={paper.status}
+                        onChange={e => updateStatus(paper.id, e.target.value as PaperStatus)}
+                        className={`badge cursor-pointer border-0 ${getStatusColor(paper.status)} appearance-none pr-1`}
+                      >
+                        {EDITABLE_STATUSES.map(s => <option key={s} value={s}>{getStatusLabel(s)}</option>)}
+                      </select>
+                    )}
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex flex-col gap-1">

@@ -130,6 +130,10 @@ export const conferencesApi = {
 // Users
 export const systemApi = {
   health: () => api.get('/system/health'),
+  // Bulk-clears notification history system-wide (every user's, not just
+  // the caller's) - scope is 'read' | 'older_than' | 'all'.
+  clearNotifications: (scope: 'read' | 'older_than' | 'all', olderThanDays?: number) =>
+    api.delete('/system/notifications', { params: { scope, older_than_days: olderThanDays } }),
 };
 
 export const certificatesApi = {
