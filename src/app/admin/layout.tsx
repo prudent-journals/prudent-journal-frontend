@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   LayoutDashboard, FileText, Users, Calendar, BookOpen, Library,
-  Settings, LogOut, ChevronRight, Star, Award, Activity, Menu, X, User
+  Settings, LogOut, ChevronRight, Star, Award, Activity, Menu, X, User, Bell
 } from 'lucide-react';
 import { useAuthStore, isAdmin } from '@/lib/auth-store';
 import { cn, getInitials, getRoleLabel } from '@/lib/utils';
@@ -23,6 +23,7 @@ const NAV = [
   { href: '/admin/proceedings', label: 'Proceedings', icon: Library },
   { href: '/admin/certificates', label: 'Certificates', icon: Award },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/notifications', label: 'Notifications', icon: Bell },
   { href: '/admin/system', label: 'System', icon: Activity },
 ];
 

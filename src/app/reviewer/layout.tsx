@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, ClipboardList, CheckCircle2, BookOpen,
+  LayoutDashboard, ClipboardList, CheckCircle2, BookOpen, Bell,
   LogOut, ChevronRight, Settings, Menu, X, User,
 } from 'lucide-react';
 import { useAuthStore, isReviewer } from '@/lib/auth-store';
@@ -15,6 +15,7 @@ const reviewerNav = [
   { href: '/reviewer', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/reviewer/queue', label: 'Review Queue', icon: ClipboardList },
   { href: '/reviewer/completed', label: 'Completed', icon: CheckCircle2 },
+  { href: '/reviewer/notifications', label: 'Notifications', icon: Bell },
 ];
 
 export default function ReviewerLayout({ children }: { children: React.ReactNode }) {
@@ -173,7 +174,7 @@ export default function ReviewerLayout({ children }: { children: React.ReactNode
       </main>
 
       {/* Mobile bottom navigation */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-navy-900 border-t border-navy-800 grid grid-cols-3">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-navy-900 border-t border-navy-800 grid grid-cols-4">
         {reviewerNav.map(({ href, label, icon: Icon, exact }) => {
           const active = exact ? pathname === href : pathname.startsWith(href);
           return (

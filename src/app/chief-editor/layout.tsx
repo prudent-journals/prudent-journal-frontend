@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, FileText, Users, BookOpen,
+  LayoutDashboard, FileText, Users, BookOpen, Bell,
   Settings, LogOut, ChevronRight, Menu, X, User,
 } from 'lucide-react';
 import { useAuthStore, isChiefEditor } from '@/lib/auth-store';
@@ -19,6 +19,7 @@ const NAV = [
   { href: '/chief-editor', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/chief-editor/papers', label: 'Submissions', icon: FileText },
   { href: '/chief-editor/reviewers', label: 'Reviewers', icon: Users },
+  { href: '/chief-editor/notifications', label: 'Notifications', icon: Bell },
 ];
 
 export default function ChiefEditorLayout({ children }: { children: React.ReactNode }) {
