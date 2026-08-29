@@ -14,7 +14,11 @@
 // Bumped whenever a release changes the shell or the shape of what is cached.
 // v3: /chief-editor was missing from PRIVATE_PATHS, so its pages were being
 // cached like a public route and could serve a stale submissions list.
-const VERSION = 'v3';
+// v4: the Cache API matches on URL only and ignores the Range header, so a
+// single cached partial (206) response for a document was being replayed for
+// every later request to that URL regardless of what range it asked for -
+// this is what made ranged downloads return the wrong slice of a document.
+const VERSION = 'v4';
 const SHELL_CACHE = `pj-shell-${VERSION}`;
 const DATA_CACHE = `pj-data-${VERSION}`;
 const DOC_CACHE = `pj-docs-${VERSION}`;
@@ -74,13 +78,20 @@ self.addEventListener('fetch', (event) => {
   if (isPrivate(url)) return;
 
   // Stored documents: cache first, since a PDF at a given URL does not change.
+  // Range requests (large proceedings files load progressively, byte-range
+  // by byte-range) always go straight to the network and are never read from
+  // or written into this cache: cache matching ignores the Range header
+  // entirely, so a cached partial response would otherwise be handed back
+  // for whatever range - or whatever full fetch - asked for it next.
   if (url.pathname.startsWith('/files/') || url.pathname.endsWith('.pdf')) {
+    if (request.headers.has('range')) return;
+
     event.respondWith(
       caches.match(request).then(
         (hit) =>
           hit ||
           fetch(request).then((res) => {
-            if (res.ok) {
+            if (res.status === 200) {
               const copy = res.clone();
               caches.open(DOC_CACHE).then((c) =>
                 c.put(request, copy).then(() => trim(DOC_CACHE, MAX_DOCS)),
