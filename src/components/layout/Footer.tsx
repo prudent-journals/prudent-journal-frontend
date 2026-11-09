@@ -87,6 +87,11 @@ export default function Footer({ full = false }: Props) {
             <span className="mx-1.5 text-parchment-700">·</span>
             RC <span className="font-mono">9613688</span>
           </p>
+          <p className="text-[11px] text-parchment-600 mt-1">
+            Prudent Journal
+            <span className="mx-1.5 text-parchment-700">·</span>
+            EISSN <span className="font-mono">2846-7329</span>
+          </p>
         </div>
       )}
 
@@ -133,9 +138,12 @@ export default function Footer({ full = false }: Props) {
               RC <span className="font-mono text-parchment-500">9613688</span>
             </p>
           </div>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-parchment-600">ISSN (Online): </span>
-            <span className="text-xs text-parchment-400 font-mono">XXXX-XXXX</span>
+          <div className="text-xs text-center md:text-right space-y-1">
+            <p className="text-parchment-400">Prudent Journal</p>
+            <p>
+              <span className="text-parchment-600">EISSN </span>
+              <span className="text-parchment-400 font-mono">2846-7329</span>
+            </p>
           </div>
         </div>
       </div>

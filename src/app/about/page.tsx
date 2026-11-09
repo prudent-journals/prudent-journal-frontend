@@ -384,6 +384,14 @@ export default function AboutPage() {
                     <dd className="text-parchment-100 font-mono text-right">9613688</dd>
                   </div>
                   <div className="flex justify-between gap-4 py-2 border-t border-navy-800">
+                    <dt className="text-parchment-400">Journal</dt>
+                    <dd className="text-parchment-100 text-right">Prudent Journal</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 py-2 border-t border-navy-800">
+                    <dt className="text-parchment-400">EISSN</dt>
+                    <dd className="text-parchment-100 font-mono text-right">2846-7329</dd>
+                  </div>
+                  <div className="flex justify-between gap-4 py-2 border-t border-navy-800">
                     <dt className="text-parchment-400">Jurisdiction</dt>
                     <dd className="text-parchment-100 text-right">Federal Republic of Nigeria</dd>
                   </div>
